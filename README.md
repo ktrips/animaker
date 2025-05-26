@@ -5,7 +5,15 @@ Anime Maker
 ## Anime style: Ghibli / Japanese 90's Anime / 
 
 
-Picture upload:
+## Character:
+
+### Picture upload:
+
+### Name:
+### Picture:
+### Chara: 
+### Outfits:
+
 
 ## Panel 1
 ### 画面構図: ワイドショット / ロングショット / ミディアムショット / フェイスアップ
