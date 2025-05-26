@@ -2,8 +2,9 @@
 
 Anime Maker
 
-## Anime style: Ghibli / Japanese 90's Anime / 
+# General setting
 
+## Anime style: Ghibli / Japanese 90's Anime / 
 
 ## Character:
 
@@ -12,6 +13,11 @@ Anime Maker
 ### Chara: 
 ### Outfits:
 
+# Page setting
+## Title:
+## 
+
+# Panel layout
 ## Panel 1
 ### 画面構図: ワイドショット / ロングショット / ミディアムショット / フェイスアップ
 ### 演出指示: 
