@@ -1,1 +1,5 @@
-# animaker
+# AniMaker
+
+Anime Maker
+
+
