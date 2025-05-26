@@ -2,6 +2,9 @@
 
 Anime Maker
 
+## Anime style: Ghibli / Japanese 90's Anime / 
+
+
 Picture upload:
 
 ## Panel 1
@@ -9,6 +12,7 @@ Picture upload:
 ### 演出指示: 
 ### テキスト要素
 #### ナレーション: 
+#### モノローグ (主人公): 
 #### 効果音: バーン / ドーン / 
 #### キャラクター表情: 
 
