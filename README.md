@@ -7,13 +7,10 @@ Anime Maker
 
 ## Character:
 
-### Picture upload:
-
 ### Name:
-### Picture:
+### Picture upload:
 ### Chara: 
 ### Outfits:
-
 
 ## Panel 1
 ### 画面構図: ワイドショット / ロングショット / ミディアムショット / フェイスアップ
