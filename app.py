@@ -20,7 +20,7 @@ from gradio.themes import Citrus, Default, Glass, Monochrome, Ocean, Origin, Sof
 from dotenv import load_dotenv
 load_dotenv()
 
-styles= {"Jp Anime": "90年代の日本のアニメ",
+styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル",
         "Ghible": "ジブリ風",
         "Dragonquest": "鳥山明のドラゴンクエストスタイル"}
 
@@ -151,7 +151,7 @@ Based on [#text-only storyboard] and reflecting the world of 1990’s Japanese m
 
 - Overall setting:
     - Canvas size: 1024 × 1536 (portrait orientation)
-    - Art style: 日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイルにしてください。 (used consistently in every panel)
+    - Art style: {general_style} (used consistently in every panel)
     - Image quality: crisp and clear (used consistently in every panel)
     - Font: Noto Sans JP (used consistently in every panel)
     - Panel Margins: Each panel should have a uniform margin of 10px on all four sides internally (between the artwork and the panel border).
