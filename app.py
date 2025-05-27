@@ -20,7 +20,11 @@ from gradio.themes import Citrus, Default, Glass, Monochrome, Ocean, Origin, Sof
 from dotenv import load_dotenv
 load_dotenv()
 
-llms = {"chatgpt": "gpt-4o",
+styles= {"Jp Anime": "90年代の日本のアニメ",
+        "Ghible": "ジブリ風",
+        "Dragonquest": "鳥山明のドラゴンクエストスタイル"}
+
+llms = {"chatgpt": "gpt-4o-mini",
         "gemini": "gemini-2.0-flash-exp",
         "claude": "claude-3-5-sonnet-latest"}
 options = {"""
@@ -31,9 +35,16 @@ options = {"""
 """}
 default_model= "chatgpt"
 default_steps= 10
-default_name = "BOOKApp"
+default_name = "ANIMAKER"
 default_cat  = "Book"
 default_key  = "" #"AI_Key..."
+
+shots = {"Wide": "wide shot",
+        "Long": "long shot",
+        "Medium": "medium shot",
+        "Close": "close shot"
+        }
+
 
 from browser_use.browser.browser import Browser, BrowserConfig
 browser = Browser(
@@ -122,26 +133,65 @@ async def main(booka_out,category, llm_model,num_steps,llm_key):
 
     agent = Agent(
         task=f"""
-あなたは{category}の以下のURLをチェックして価格監視を行うエージェントです。
-対象となる商品: {booka_out}
+# Prerequisites:
+Title: Ironman triathlon race for the normal business man Shinji
+Artist Requirements: 日本の90年代アニメ風に描きます。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイルにしてください。
+Required Background Knowledge: Ability to read and interpret character designs and storyboards
+Purpose & Goal: Complete a full-color manga based on the provided text-only storyboard
 
-1. 以下のURLを一つづつチェックして、各URL毎に価格を抽出して下さい。
-    - {cat_ret[1][0]} url: {cat_ret[2][0]}
-    - {cat_ret[1][1]} url: {cat_ret[2][1]}
-    - {cat_ret[1][2]} url: {cat_ret[2][2]}
-    
-    各URL全てにおいて、下記の形式でデータを取得して下さい。
-    一つのURLから表示結果を得られたとしても、処理をやめずに、全てのURLに関して処理を続けて下さい。
-    - 価格(そのサイト中の最低価格)
-    - 種類（新品、中古、電子書籍、レンタル、または無料）
-    - 送料(なけれな0円)
-    - クーポン(なけれな0円)
-    - ポイント(なけれな0円)
-    - その商品詳細のリンク
+# execution instruction:
+Based on [#text-only storyboard] and reflecting the world of 1990’s Japanese manga style. Please output a full color cartoon. Please give your best effort.
 
-2. 日本語で、その商品の正式名称、商品映像、100字以内の要約、発行年月、定価、おすすめ度合いとそのリンクを簡潔に表示して下さい。
-3. 最終的に全てのデータをまとめて、表形式で表示して下さい。
-4. 文末に表示: AI Agent {num_steps} browser-use by {LLM_MODEL}
+# text-only storyboard:
+- Character Information
+  - 主人公:
+    - 名前：{chara_out}
+    - 年齢、性別、髪型、表情、服装：{chara_out}
+    - Please draw the protagonist with reference to the attached file `<file:shinji.png>`
+
+- Overall setting:
+    - Canvas size: 1024 × 1536 (portrait orientation)
+    - Art style: 日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイルにしてください。 (used consistently in every panel)
+    - Image quality: crisp and clear (used consistently in every panel)
+    - Font: Noto Sans JP (used consistently in every panel)
+    - Panel Margins: Each panel should have a uniform margin of 10px on all four sides internally (between the artwork and the panel border).
+    - Panel Border: All panels should have a consistent border, for example, a 2px solid black line.
+    - Gutter Width: The space (gutter) between panels should be uniform, for example, 20px horizontally and vertically.
+    - Page Margins: The entire page (canvas) should have a uniform margin of 30px around the area where panels are laid out.
+
+- panel layout
+- panel 1
+  - 画面構図: ワイドショット。シンジは、足に血を流しながら、道路に体を横たえ、白いトライアスロン・バイクの下敷きになったまま、動けなかった。
+  - 演出指示: オーストラリアの海沿いの道路。光は降り注ぎ明るいが、自転車と共に倒れるシンジは暗いイメージ。
+  - テキスト要素:
+    - ナレーション: シンジは倒れていた。
+    - 効果音・書き文字: バーン（道路に倒れているシンジと自転車）
+  - キャラクター表情:
+    - 主人公: 道路に体を横たえ、アスファルトの堅いゴツゴツした感触に、妙に現実感がなく、呆然と倒れている。
+
+- panel 2
+  - 画面構図: ロングショット。オーストラリア・ケアンズで行われているアイアンマン・レースの中ほど、バイクパートの90km付近を白いトライアスロン・バイクで走っているシンジ
+  - 演出指示: 主人公には明るいスポットライトが当たっているような印象。背景にはケアンズの海とそこを真っ直ぐに走る直線的な道路。
+  - テキスト要素:
+　- ナレーション: アイアンマン・レースとは、スイム3.8km、バイク180km、ラン42.2kmの最長距離トライアスロン大会
+  - キャラクター表情:
+    - 主人公: 一生懸命、自転車を漕いでいる。
+
+- panel 3
+  - 画面構図: ミディアムショット。海沿いのアップダウンが続く道の途中の登り。白いトライアスロン・バイクに乗ったシンジの足が攣ってしまう。
+  - 演出指示: 立ちゴケしてショックを受けている
+  - テキスト要素:
+ナレーション: 突然両太モモが攣ってしまったのだ！
+    - 効果音・書き文字: (足がつって衝撃的なイメージ) ビシー
+  - キャラクター表情:
+    - 主人公: 自転車に乗っている時に足が攣って、痛そうな顔
+
+# supplement:
+- Reconfirmation of instructions is not required.
+- Self-evaluation is not required.
+- Please output images only.
+
+文末に表示: AI Agent by {LLM_MODEL}
 """,
         llm=llm_api,
 		#controller=controller,
@@ -171,7 +221,7 @@ def camera_detect(image,llm_model):
         apikey = llm_key
     else:"""
     apikey = os.getenv(llm_model+"_key")
-    prompt = "提供された画像の中に写っている本の情報だけに限定して、本の題名を正確に表示して下さい。"
+    prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
     image_base64 = encode_image(image)
     generation_config = {
         "temperature": 0.1,
@@ -221,8 +271,8 @@ def camera_detect(image,llm_model):
 
 #img_up = gr.Image(label="Book Photo", sources="webcam",webcam_constraints=["rear"], 
 #                  type="pil", mirror_webcam=False, width=350,height=350)
-img_up = gr.Image(label="Upload Photo", sources="upload",
-                  type="pil", mirror_webcam=False, width=350,height=350)
+img_up = gr.Image(label="Chara Photo", sources="upload",
+                  type="pil", mirror_webcam=False, width=300,height=300)
 
 #img_out= gr.Textbox(label="Book Name")
 
@@ -234,13 +284,34 @@ with gr.Blocks() as demo:
     #gr.Markdown("<h1>Booka - Price Search App</h1>")
     with gr.Row():
         with gr.Column():
-            with gr.Tab(default_name+" Camera"):
+            with gr.Tab(default_name+"!"):
                 with gr.Row():
-                    llm_model= gr.Dropdown(choices=llms,label="LLM", interactive=True)
-                    booka_out= gr.Textbox(label="Book Name",placeholder="Take photo above or Put book name here!",interactive=True)
+                    general_style  = gr.Dropdown(choices=styles,label="Anime Style", interactive=True)
+                    general_style  = gr.Dropdown(choices=llms,label="Landscape", interactive=True)
+            
+                with gr.Row():
+                    llm_model  = gr.Dropdown(choices=llms,label="LLM", interactive=True)
+                    chara_name= gr.Textbox(label="Chara Name", interactive=True)
+                    chara_out= gr.Textbox(label="Outfit",placeholder="Character's outfit",interactive=True)
                     camera = gr.Interface(fn=camera_detect,
-                        inputs=[img_up,llm_model], outputs=booka_out, live=True, 
+                        inputs=[img_up,llm_model], outputs=chara_out, live=True, 
                         flagging_mode="never", clear_btn=None)
+ 
+                with gr.Row():
+                    panel_shot= gr.Dropdown(choices=shots,label="Panel1 Shot", interactive=True)
+                    panel_name = gr.Textbox(label="Name", interactive=True)
+                    panel_naration= gr.Textbox(label="Naration", interactive=True)
+                    panel_sound   = gr.Textbox(label="Sound", interactive=True)
+                    panel_content = gr.Textbox(label="Content", interactive=True)
+                
+                with gr.Row():
+                    panel_shot= gr.Dropdown(choices=shots,label="Panel2 Shot", interactive=True)
+                    panel_name = gr.Textbox(label="Name", interactive=True)
+                    panel_naration= gr.Textbox(label="Naration", interactive=True)
+                    panel_sound   = gr.Textbox(label="Sound", interactive=True)
+                    panel_content = gr.Textbox(label="Content", interactive=True)
+
+
             with gr.Tab("All Other BOOKA"):
                 with gr.Row():
                     category = gr.Dropdown(choices=categories,label="Category",value=default_cat,interactive=True)
