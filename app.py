@@ -21,14 +21,17 @@ from gradio.themes import Citrus, Default, Glass, Monochrome, Ocean, Origin, Sof
 from dotenv import load_dotenv
 load_dotenv()
 
-anime_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル",
+page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル",
         "Ghible": "ジブリ風",
         "Dragonquest": "鳥山明のドラゴンクエストスタイル"}
-canvas_sizes= {"1024 × 1536": "1024 × 1536 (portrait orientation)",
+page_sizes= {"1024 × 1536": "1024 × 1536 (portrait orientation)",
         "4コマ": "4コマ",
         "ポスター": "ポスター"}
+page_storys= {"Original": "主人公を中心として、入力されたページ構成を変更せず、忠実に従って下さい。",
+        "Generate": "主人公を中心としたストーリーを、ページ構成に従って、できる限り詳細に生成して下さい。",
+        "Hybrid": "主人公を中心としたストーリーを、入力された情報に付加して、作り上げて下さい。"}
 
-llms = {"chatgpt": "gpt-4o",
+llms = {"chatgpt": "gpt-image-1", #"gpt-4o",
         "gemini": "gemini-2.0-flash-exp",
         "claude": "claude-3-5-sonnet-latest"}
 options = {"""
@@ -43,10 +46,17 @@ default_name = "AniMaker"
 default_cat  = "Book"
 default_key  = "" #"AI_Key..."
 
-shots = {"Wide": "wide shot",
-        "Long": "long shot",
-        "Medium": "medium shot",
-        "Close": "close shot"
+panel_sizes = {"Small": "Small size",
+        "Medium": "Medium size",
+        "Big": "Big size",
+        "Very big": "Very big size"
+        }
+panel_shots = {"Full": "Full shot",
+        "Wide": "Wide shot",
+        "Knee": "Knee shot",
+        "Waist": "WWaist shot",
+        "Up": "Up shot",
+        "Close-up": "Close-up shot"
         }
 
 from browser_use.browser.browser import Browser, BrowserConfig
@@ -91,8 +101,9 @@ def get_cat(category):
     # print(cats, cat_ops, cat_urls)
     return cats, cat_ops, cat_urls
 
-json_path= "./results/"
-file_path= "./source/"
+json_path = "./results/"
+file_path = "./source/"
+imgup_path= "./img_ups/"
 
 def ret_data(dates=5):
     hist_data = ""
@@ -112,32 +123,43 @@ import google.generativeai as gemini
 #from google.cloud import vision
 #from google.oauth2 import service_account
 
-async def save_data(book_data: str, book: str):
+async def save_data(chara_name: str, image_data: str):
     output_data = {
         "timestamp": datetime.now().isoformat(),
-        "book": book,
-        "data": book_data
+        "chara": chara_name,
+        "data": image_data
     }
-    filename = f'book_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+    filename = f'{chara_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+
     with open("./results/"+filename, 'w', encoding='utf-8') as f:
         json.dump(output_data, f, ensure_ascii=False, indent=4)
     print(f"\nデータを {filename} に保存しました")
 
-async def main(chara_name, chara_out, image, general_style, llm_model, llm_key):
-#def camera_detect(image,llm_model):
-
+async def main(page_title, page_style, page_size, chara_name, chara_out, img_up, llm_model, story,
+            panel1_shot,panel1_comp,panel1_naration,panel1_others, 
+            panel2_shot,panel2_comp,panel2_naration,panel2_others,
+            panel3_shot,panel3_comp,panel3_naration,panel3_others, 
+            panel4_shot,panel4_comp,panel4_naration,panel4_others):
     llm_model=default_model
     apikey = os.getenv(llm_model+"_key")
-    
+
+    #chara_name= "シンジ"
+    #chara_out = "この人物は35歳くらいの男性で、赤と白のトライアスロンスーツを着ています。スーツには「ex-ORACLE Triathlon Team」と書かれており、肩に「2018」と書かれたタトゥーかペイントがあります。髪型は短めで、表情は笑顔です。"
+    #source_image = open("shinji_top.png", "rb")
+    #general_style = "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル"
+    #llm_model = "gpt-4o"
+    #page_title= "シンジは倒れていた"
+    #page_size = "1024 × 1536 (portrait orientation)"
+
     anime_prompt = f"""
 # Prerequisites:
-Title: {title}
-Artist Requirements: {general_style}
+Title: {page_title}
+Artist Requirements: {page_styles[page_style]}
 Required Background Knowledge: Ability to read and interpret character designs and storyboards
 Purpose & Goal: Complete a full-color manga based on the provided text-only storyboard
 
 # execution instruction:
-Based on [#text-only storyboard] and reflecting the world of {general_style}
+Based on [#text-only storyboard] and reflecting the world of {page_style}
 Please output a full color cartoon. Please give your best effort.
 
 # text-only storyboard:
@@ -148,8 +170,8 @@ Please output a full color cartoon. Please give your best effort.
     - Please draw the protagonist with reference to the attached file `<file:shinji.png>`
 
 - Overall setting:
-    - Canvas size: {general_size}
-    - Art style: {general_style} (used consistently in every panel)
+    - Canvas size: {page_sizes[page_size]}
+    - Art style: {page_styles[page_style]} (used consistently in every panel)
     - Image quality: crisp and clear (used consistently in every panel)
     - Font: Noto Sans JP (used consistently in every panel)
     - Panel Margins: Each panel should have a uniform margin of 10px on all four sides internally (between the artwork and the panel border).
@@ -157,41 +179,74 @@ Please output a full color cartoon. Please give your best effort.
     - Gutter Width: The space (gutter) between panels should be uniform, for example, 20px horizontally and vertically.
     - Page Margins: The entire page (canvas) should have a uniform margin of 30px around the area where panels are laid out.
 
-- panel layout
- - panel 1
-  - 画面構図: ワイドショット。シンジは、足に血を流しながら、道路に体を横たえ、白いトライアスロン・バイクの下敷きになったまま、動けなかった。
-  - 演出指示: オーストラリアの海沿いの道路。光は降り注ぎ明るいが、自転車と共に倒れるシンジは暗いイメージ。
-  - テキスト要素:
-    - ナレーション: シンジは倒れていた。
-    - 効果音・書き文字: バーン（道路に倒れているシンジと自転車）
-  - キャラクター表情:
-    - 主人公: 道路に体を横たえ、アスファルトの堅いゴツゴツした感触に、妙に現実感がなく、呆然と倒れている。
-
- - panel 2
-  - 画面構図: ロングショット。オーストラリア・ケアンズで行われているアイアンマン・レースの中ほど、バイクパートの90km付近を白いトライアスロン・バイクで走っているシンジ
-  - 演出指示: 主人公には明るいスポットライトが当たっているような印象。背景にはケアンズの海とそこを真っ直ぐに走る直線的な道路。
-  - テキスト要素:
-    - ナレーション: アイアンマン・レースとは、スイム3.8km、バイク180km、ラン42.2kmの最長距離トライアスロン大会
-  - キャラクター表情:
-    - 主人公: 一生懸命、自転車を漕いでいる。
-
- - panel 3
-  - 画面構図: ミディアムショット。海沿いのアップダウンが続く道の途中の登り。白いトライアスロン・バイクに乗ったシンジの足が攣ってしまう。
-  - 演出指示: 立ちゴケしてショックを受けている
-  - テキスト要素:
-    - ナレーション: 突然両太モモが攣ってしまったのだ！
-    - 効果音・書き文字: (足がつって衝撃的なイメージ) ビシー
-  - キャラクター表情:
-    - 主人公: 自転車に乗っている時に足が攣って、痛そうな顔
+- Page Title: {page_title}
 
 # supplement:
 - Reconfirmation of instructions is not required.
 - Self-evaluation is not required.
 - Please output images only.
+"""
+    
+    original_prompt = f"""
+- Panel layout:
+ - Panel 1 
+  - Panel composition: {panel1_shot}
+  - 演出指示:. {panel1_comp}
+  - テキスト要素:
+    - ナレーション: {panel1_naration}
+    - 効果音・書き文字: このPanel1のシーンに最適な効果音・書き文字を生成して下さい。
+  - キャラクター表情と動き:
+    - 主人公: このPanel1のシーンに最適な主人公の表情を類推し表示して下さい。
+    - その他の登場人物: {panel1_others}
+    
+ - Panel 2
+  - Panel composition: {panel2_shot}
+  - 演出指示:. {panel2_comp}
+  - テキスト要素:
+    - ナレーション: {panel2_naration}
+    - 効果音・書き文字: このPanel2のシーンに最適な効果音・書き文字を生成して下さい。
+  - キャラクター表情と動き:
+    - 主人公: このPanel2のシーンに最適な主人公の表情を類推し表示して下さい。
+    - その他の登場人物: {panel2_others}
+
+ - Panel 3
+  - Panel composition: {panel3_shot}
+  - 演出指示:. {panel3_comp}
+  - テキスト要素:
+    - ナレーション: {panel3_naration}
+    - 効果音・書き文字: このPanel3のシーンに最適な効果音・書き文字を生成して下さい。
+  - キャラクター表情と動き:
+    - 主人公: このPanel3のシーンに最適な主人公の表情を類推し表示して下さい。
+    - その他の登場人物: {panel3_others}
+
+ - Panel 4
+  - Panel composition: {panel4_shot}
+  - 演出指示:. {panel4_comp}
+  - テキスト要素:
+    - ナレーション: {panel4_naration}
+    - 効果音・書き文字: このPanel3のシーンに最適な効果音・書き文字を生成して下さい。
+  - キャラクター表情と動き:
+    - 主人公: このPanel3のシーンに最適な主人公の表情を類推し表示して下さい。
+    - その他の登場人物: {panel4_others}
 
 """
+    
+    if page_story == "generate":
+        anime_prompt = anime_prompt + generate_prompt
+    else:
+        anime_prompt = anime_prompt + original_prompt
 
-    image_base64 = encode_image(image)
+    image_base64 = encode_image(img_up) # open(img_up, "rb")
+    #filename = f'{chara_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    #imagefile = './img_ups/'+filename+'.jpg'
+    #imagefile = img_up.filename
+    #print(imagefile)
+    #with open(imagefile, "wb") as f:
+    #    f.write(base64.b64decode(response.data[0].b64_json))
+    #with open(image_path, "rb") as image_file:
+    #    return base64.b64encode(image_file.read()).decode('utf-8')
+    source_image = open('./img_ups/image.jpg', "rb")
+
     generation_config = {
         "temperature": 0.1,
         "top_p": 1,
@@ -207,36 +262,40 @@ Please output a full color cartoon. Please give your best effort.
         return result
 
     elif llm_model == "chatgpt":
-        openai_client = OpenAI(api_key=apikey)
+        client = OpenAI(api_key=apikey)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
-        response = openai_client.chat.completions.create(
-            model=llms[llm_model],
-            messages = [
-                {'role': 'system',
-                    'content': "このシステムは、画像が提供された時に、その画像の中に何が写っているかを判別します。"},
-                {'role': 'user',
-                    'content': [
-                        {'type': 'text',
-                            'text': anime_prompt},
-                        {'type': 'image_url',
-                            'image_url': {'url': image_base64}},
-                    ]
-                },
-            ],
-            temperature = 0.9,
-            max_tokens = 256,
+        response = client.images.edit(
+            model = "gpt-image-1",
+            image = source_image,
+            prompt= anime_prompt
         )
-        result = response.choices[0].message.content
-        print(result)
-        return result
+        image_response = response.data[0].b64_json
+
+        #output_data = {
+            #"timestamp": datetime.now().isoformat(),
+            #"chara": chara_name,
+            #"data": image_data
+        #}
+        
+        filename = f'{chara_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+        imagefile = './results/'+filename+'.jpg'
+        promptfile= './results/'+filename+'.json'
+
+        with open(promptfile, 'w', encoding='utf-8') as f:
+            json.dump(anime_prompt, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',',': '))
+
+        with open(imagefile, "wb") as f:
+            f.write(base64.b64decode(image_response))
+        print(imagefile+" created!")
     
+        return imagefile
 
 #from google.cloud import vision
 #from google.oauth2 import service_account
 #import base64
 
 #async def main(booka_out,category, llm_model,num_steps,llm_key):
-async def main2(chara_name, chara_out, img_up, general_style, llm_model, llm_key):
+async def main2(chara_name, chara_out, img_up, page_style, llm_model, llm_key):
 
     cat_ret = get_cat(category)
     if llm_key:
@@ -280,6 +339,8 @@ def camera_detect(image,llm_model):
     apikey = os.getenv(llm_model+"_key")
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
 
+    image.save("./img_ups/image.jpg")
+
     image_base64 = encode_image(image)
     generation_config = {
         "temperature": 0.1,
@@ -299,7 +360,7 @@ def camera_detect(image,llm_model):
         openai_client = OpenAI(api_key=apikey)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
         response = openai_client.chat.completions.create(
-            model=llms[llm_model],
+            model="gpt-4o-mini", #llms[llm_model],
             messages = [
                 {'role': 'system',
                     'content': "このシステムは、画像が提供された時に、その画像の中に何が写っているかを判別します。"},
@@ -317,16 +378,8 @@ def camera_detect(image,llm_model):
         )
         result = response.choices[0].message.content
         print(result)
+
         return result
-    
-    """
-    print(result)
-    nTitle = re.search(r'題名|タイトル|書籍名|Title', result)
-    if nTitle:
-        result = result[nTitle.end():]
-    #chat_msg = "BOOKA Name: " + result
-    """
-    #return result
 
 #img_up = gr.Image(label="Book Photo", sources="webcam",webcam_constraints=["rear"], 
 #                  type="pil", mirror_webcam=False, width=350,height=350)
@@ -345,30 +398,53 @@ with gr.Blocks() as demo:
         with gr.Column():
             with gr.Tab(default_name+"!"):
                 with gr.Row():
-                    general_style= gr.Dropdown(choices=anime_styles,label="Anime Style", interactive=True)
-                    general_size = gr.Dropdown(choices=canvas_sizes,label="Canvas size", interactive=True)
-                    llm_model    = gr.Dropdown(choices=llms,label="LLM", interactive=True)
+                    page_style= gr.Dropdown(choices=page_styles,label="Anime Style", interactive=True)
+                    page_size = gr.Dropdown(choices=page_sizes,label="Canvas size", interactive=True)
+                    page_story= gr.Dropdown(choices=page_storys,label="Original/Generate", interactive=True)
                     chara_name= gr.Textbox(label="Chara Name", interactive=True)
-                    chara_out = gr.Textbox(label="Outfit",placeholder="Character's outfit",interactive=True)
+                    page_title= gr.Textbox(label="Title", interactive=True)
+                    page_plot = gr.Textbox(label="Plot", interactive=True)
+                    chara_out = gr.Textbox(label="Charactor",placeholder="Upload photo and edit results",interactive=True)
                     camera    = gr.Interface(fn=camera_detect,
-                        inputs=[img_up,llm_model], outputs=chara_out, live=True, 
+                        inputs=[img_up], outputs=chara_out, live=True, 
                         flagging_mode="never", clear_btn=None)
                     
                 output = gr.Markdown("Panel layout:")
                 with gr.Row():
-                    panel_shot= gr.Dropdown(choices=shots,label="Panel1 Shot", interactive=True)
-                    panel_name = gr.Textbox(label="Name", interactive=True)
-                    panel_naration= gr.Textbox(label="Naration", interactive=True)
-                    panel_sound   = gr.Textbox(label="Sound", interactive=True)
-                    panel_content = gr.Textbox(label="Content", interactive=True)
-                
-                with gr.Row():
-                    panel_shot= gr.Dropdown(choices=shots,label="Panel2 Shot", interactive=True)
-                    panel_name = gr.Textbox(label="Name", interactive=True)
-                    panel_naration= gr.Textbox(label="Naration", interactive=True)
-                    panel_sound   = gr.Textbox(label="Sound", interactive=True)
-                    panel_content = gr.Textbox(label="Content", interactive=True)
+                    #panel1_size= gr.Dropdown(choices=panel_sizes,label="Panel1 Size", interactive=True)
+                    panel1_shot= gr.Dropdown(choices=panel_shots,label="Panel 1 Shot", interactive=True)
+                    panel1_comp= gr.Textbox(label="Composition", interactive=True)
+                    panel1_naration = gr.Textbox(label="Naration", interactive=True)
+                    #panel1_onomatope= gr.Textbox(label="Onomatope", interactive=True)
+                    #panel1_face  = gr.Textbox(label="Face", interactive=True)
+                    panel1_others= gr.Textbox(label="Other charactors", interactive=True)                
 
+                with gr.Row():
+                    #panel2_size= gr.Dropdown(choices=panel_sizes,label="Panel2 Size", interactive=True)
+                    panel2_shot= gr.Dropdown(choices=panel_shots,label="Panel 2 Shot", interactive=True)
+                    panel2_comp= gr.Textbox(label="Composition", interactive=True)
+                    panel2_naration = gr.Textbox(label="Naration", interactive=True)
+                    #panel2_onomatope= gr.Textbox(label="Onomatope", interactive=True)
+                    #panel2_face = gr.Textbox(label="Face", interactive=True)
+                    panel2_others= gr.Textbox(label="Others charactors", interactive=True)
+
+                with gr.Row():
+                    #panel3_size= gr.Dropdown(choices=panel_sizes,label="Panel3 Size", interactive=True)
+                    panel3_shot= gr.Dropdown(choices=panel_shots,label="Panel 3 Shot", interactive=True)
+                    panel3_comp= gr.Textbox(label="Composition", interactive=True)
+                    panel3_naration = gr.Textbox(label="Naration", interactive=True)
+                    #panel3_onomatope= gr.Textbox(label="Onomatope", interactive=True)
+                    #panel3_face = gr.Textbox(label="Face", interactive=True)
+                    panel3_others= gr.Textbox(label="Others charactors", interactive=True) 
+
+                with gr.Row():
+                    #panel4_size= gr.Dropdown(choices=panel_sizes,label="Panel4 Size", interactive=True)
+                    panel4_shot= gr.Dropdown(choices=panel_shots,label="Panel 4 Shot", interactive=True)
+                    panel4_comp= gr.Textbox(label="Composition", interactive=True)
+                    panel4_naration = gr.Textbox(label="Naration", interactive=True)
+                    #panel4_onomatope= gr.Textbox(label="Onomatope", interactive=True)
+                    #panel4_face = gr.Textbox(label="Face", interactive=True)
+                    panel4_others= gr.Textbox(label="Other charactors", interactive=True)
 
             with gr.Tab("All Other Anime"):
                 with gr.Row():
@@ -396,16 +472,32 @@ with gr.Blocks() as demo:
                             value=[])
                           gr.Textbox(label="Additional search site:", placeholder="https://...",interactive=True,)
                 #llm_model= gr.Dropdown(choices=llms,label="LLM",value=default_model, interactive=True)
+                llm_model    = gr.Dropdown(choices=llms,label="LLM", interactive=True)
                 llm_key  = gr.Textbox(label="LLM API Key",value=default_key,placeholder="Paste your LLM API key here", interactive=True,)
                 num_steps= gr.Slider(minimum=1,maximum=20,value=default_steps,step=1, label="Steps",interactive=True)
 
-    output = gr.Markdown("ANIME Reuslt:")
+    #output = gr.Markdown("ANIME Reuslt:")
     search_btn = gr.Button("AniMake!")
-    search_btn.click(fn=main, inputs=[chara_name, chara_out, img_up, general_style, llm_model, llm_key], outputs=output, api_name="animaker")
-
-    with gr.Accordion(label="Anime history:", open=False):
-        hist_data = ret_data(5)
-        gr.Markdown(hist_data)
+    search_btn.click(fn=main, inputs=[page_title, page_style, page_size, chara_name, chara_out, img_up, llm_model, 
+                panel1_shot,panel1_comp,panel1_naration,panel1_others, 
+                panel2_shot,panel2_comp,panel2_naration,panel2_others,
+                panel3_shot,panel3_comp,panel3_naration,panel3_others, 
+                panel4_shot,panel4_comp,panel4_naration,panel4_others],
+                outputs=[
+                    gr.Gallery(
+                        label="ANIME Result:",
+                        show_label=True,
+                        elem_id="Gallery",
+                        columns=[2],
+                        object_fit="contain",
+                        height="auto",
+                    ),
+                    #gr.Textbox(label="Error Messages"),
+                ], api_name="animaker")
+    
+    #with gr.Accordion(label="Anime history:", open=False):
+    #    hist_data = ret_data(5)
+    #    gr.Markdown(hist_data)
 
 parser = argparse.ArgumentParser(description="Gradio UI for Browser Agent")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
