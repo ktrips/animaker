@@ -1,18 +1,18 @@
-# BOOKA
-## App for Book and Prices with AI Agent
-- AI agent browse and comapre prices for books, movies, music, and all other BOOKA!
+# AniMaker
+## App for Anime Making with AI Agent
+- AI agent to generate anime pictures 
 
 ## Sample app on the web:
-BOOKA.Ktrips.net - 
+ANIME.Ktrips.net - 
 <img src="https://github.com/user-attachments/assets/85bc7877-f968-43e3-abb9-c2947eb5b486" width="300">
 
 ## Deploy to gcloud run
 
-### Clone booka github
+### Clone animaker github
 
 ```
-$ git clone https://github.com/ktrips/booka.git
-$ cd booka
+$ git clone https://github.com/ktrips/animaker.git
+$ cd animaker
 $ gcloud services enable run.googleapis.com
 $ mkdir results
 $ vi .env
@@ -30,13 +30,13 @@ claude_key=ZZZZ
 
 ### Create Docker environment
 ```
-$ docker build --platform=linux/amd64 -t asia-northeast1-docker.pkg.dev/[your_project]/booka:v1 .
-$ docker run -p 8080:8080 -e CHROME_PERSISTENT_SESSION=true asia-northeast1-docker.pkg.dev/[your_project]/booka:v1
+$ docker build --platform=linux/amd64 -t asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1 .
+$ docker run -p 8080:8080 -e CHROME_PERSISTENT_SESSION=true asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1
 ```
 
 ### Push and deploy docker environment to Gloud
 
 ```
-$ docker push asia-northeast1-docker.pkg.dev/[your_project]/booka:v1
-$ gcloud run deploy booka --image=asia-northeast1-docker.pkg.dev/[your_project]/booka:v1 --memory=1Gi --port=8080 --allow-unauthenticated --platform=managed --region=asia-northeast1
+$ docker push asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1
+$ gcloud run deploy animaker --image=asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1 --memory=1Gi --port=8080 --allow-unauthenticated --platform=managed --region=asia-northeast1
 ```
