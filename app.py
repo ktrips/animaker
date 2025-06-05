@@ -130,26 +130,17 @@ async def save_data(chara_name: str, image_data: str):
         "data": image_data
     }
     filename = f'{chara_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
-
     with open("./results/"+filename, 'w', encoding='utf-8') as f:
         json.dump(output_data, f, ensure_ascii=False, indent=4)
     print(f"\nデータを {filename} に保存しました")
 
-async def main(page_title, page_style, page_size, chara_name, chara_out, img_up, llm_model, story,
+async def main(page_title, page_style, page_size, chara_name, chara_out, img_up, llm_model,
             panel1_shot,panel1_comp,panel1_naration,panel1_others, 
             panel2_shot,panel2_comp,panel2_naration,panel2_others,
             panel3_shot,panel3_comp,panel3_naration,panel3_others, 
             panel4_shot,panel4_comp,panel4_naration,panel4_others):
     llm_model=default_model
     apikey = os.getenv(llm_model+"_key")
-
-    #chara_name= "シンジ"
-    #chara_out = "この人物は35歳くらいの男性で、赤と白のトライアスロンスーツを着ています。スーツには「ex-ORACLE Triathlon Team」と書かれており、肩に「2018」と書かれたタトゥーかペイントがあります。髪型は短めで、表情は笑顔です。"
-    #source_image = open("shinji_top.png", "rb")
-    #general_style = "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル"
-    #llm_model = "gpt-4o"
-    #page_title= "シンジは倒れていた"
-    #page_size = "1024 × 1536 (portrait orientation)"
 
     anime_prompt = f"""
 # Prerequisites:
@@ -279,13 +270,18 @@ Please output a full color cartoon. Please give your best effort.
         
         filename = f'{chara_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
         imagefile = './results/'+filename+'.jpg'
-        promptfile= './results/'+filename+'.json'
+        promptfile= './results/'+filename+'.txt'
 
-        with open(promptfile, 'w', encoding='utf-8') as f:
-            json.dump(anime_prompt, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',',': '))
+        with open(promptfile, 'a', encoding='utf-8') as f:
+            f.write(anime_prompt)
+            #json.dump(anime_prompt, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',',': '))
 
         with open(imagefile, "wb") as f:
             f.write(base64.b64decode(image_response))
+            #image = Image.open(BytesIO(part.inline_data.data))
+            #image_path = f"results/edit_{image_count}.jpg"
+            #image.save(image_path)
+        
         print(imagefile+" created!")
     
         return imagefile
@@ -324,6 +320,8 @@ async def main2(chara_name, chara_out, img_up, page_style, llm_model, llm_key):
     await save_data(result, booka_out)
     return result
 
+def camera_nodetect(image):
+  return "please put image chara info: "
 
 def encode_image(image):
     byte_arr = io.BytesIO()
@@ -386,14 +384,10 @@ def camera_detect(image,llm_model):
 img_up = gr.Image(label="Chara Photo", sources="upload",
                   type="pil", mirror_webcam=False, width=300,height=300)
 
-#img_out= gr.Textbox(label="Book Name")
-
 def flip(im):
     return np.fliplr(im)
 
-#cat_ret = get_cat("Book")
 with gr.Blocks() as demo:
-    #gr.Markdown("<h1>Booka - Price Search App</h1>")
     with gr.Row():
         with gr.Column():
             with gr.Tab(default_name+"!"):
@@ -405,7 +399,7 @@ with gr.Blocks() as demo:
                     page_title= gr.Textbox(label="Title", interactive=True)
                     page_plot = gr.Textbox(label="Plot", interactive=True)
                     chara_out = gr.Textbox(label="Charactor",placeholder="Upload photo and edit results",interactive=True)
-                    camera    = gr.Interface(fn=camera_detect,
+                    camera    = gr.Interface(fn=camera_nodetect, #camera_detect,
                         inputs=[img_up], outputs=chara_out, live=True, 
                         flagging_mode="never", clear_btn=None)
                     
@@ -484,13 +478,14 @@ with gr.Blocks() as demo:
                 panel3_shot,panel3_comp,panel3_naration,panel3_others, 
                 panel4_shot,panel4_comp,panel4_naration,panel4_others],
                 outputs=[
-                    gr.Gallery(
+                    gr.Image(
                         label="ANIME Result:",
-                        show_label=True,
-                        elem_id="Gallery",
-                        columns=[2],
-                        object_fit="contain",
-                        height="auto",
+                    #gr.Gallery(
+                        #show_label=True,
+                        #elem_id="Gallery",
+                        #columns=[2],
+                        #object_fit="contain",
+                        #height="auto",
                     ),
                     #gr.Textbox(label="Error Messages"),
                 ], api_name="animaker")
