@@ -59,13 +59,16 @@ panel_shots = {"Full": "Full shot",
         "Close-up": "Close-up shot"
         }
 
-from browser_use.browser.browser import Browser, BrowserConfig
-browser = Browser(
-	config=BrowserConfig(
-		# headless=True,
-        chrome_instance_path='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-	)
-)
+results_path = './results/'
+imgup_path= "./img_ups/"
+
+#from browser_use.browser.browser import Browser, BrowserConfig
+#browser = Browser(
+#	config=BrowserConfig(
+#		# headless=True,
+#        chrome_instance_path='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+#	)
+#)
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -78,16 +81,8 @@ categories = ["Book","Movie","Music","Other"]
 cat_options = {
     "Book": {"Amazon" : "https://amazon.co.jp",
         "Bookoff": "https://shopping.bookoff.co.jp/search",
-        "Marcari": "https://jp.mercari.com/", 
-        "Library": "https://setagayaliv.or.jp"},
-        # "Rakuten": "https://rakuten.co.jp/"},
-    "Movie": {"AmazonPrime": "https://www.amazon.co.jp/gp/video/storefront/ref=atv_hm_hom_legacy_redirect?contentId=IncludedwithPrime&contentType=merch&merchId=IncludedwithPrime",
-        "Unext": "https://video.unext.jp/",
-        "Netflix": "https://netflix.com"},
-    "Other": {"Spotify": "https://spotify.com",
-        "AmazonMusic": "https://music.amazon.co.jp"},
-}
-
+    }
+}   
 cats= []
 def get_cat(category):
     cat_ops = []
@@ -101,19 +96,15 @@ def get_cat(category):
     # print(cats, cat_ops, cat_urls)
     return cats, cat_ops, cat_urls
 
-json_path = "./results/"
-file_path = "./source/"
-imgup_path= "./img_ups/"
-
 def ret_data(dates=5):
     hist_data = ""
-    if os.path.isdir(json_path):
-        json_files = os.listdir(json_path)
-        for json_file in json_files:
-            json_open = open(json_path+json_file, 'r')
+    if os.path.isdir(results_path):
+        files = os.listdir(results_path)
+        for file in files:
+            json_open = open(results_path+file, 'r')
             json_load = json.load(json_open)
-            hist_date = parse(json_load['timestamp']).strftime('%Y/%m/%d %H:%M:%S')
-            hist_data += hist_date + f" <a href='{json_path}{json_file}'>" + json_load['book'] + "</a><br>" #+json_load['data'] + "<br>"
+            #hist_date = parse(json_load['timestamp']).strftime('%Y/%m/%d %H:%M:%S')
+            hist_data += f" <a href='{results_path}{file}'>" + json_load + "</a><br>"
     else:
         hist_data = "No history files"
     return hist_data
@@ -150,7 +141,7 @@ Required Background Knowledge: Ability to read and interpret character designs a
 Purpose & Goal: Complete a full-color manga based on the provided text-only storyboard
 
 # execution instruction:
-Based on [#text-only storyboard] and reflecting the world of {page_style}
+Based on [#text-only storyboard] and reflecting the world of {page_styles[page_style]}
 Please output a full color cartoon. Please give your best effort.
 
 # text-only storyboard:
@@ -158,7 +149,7 @@ Please output a full color cartoon. Please give your best effort.
   - 主人公:
     - 名前：{chara_name}
     - 年齢、性別、髪型、表情、服装：{chara_out}
-    - Please draw the protagonist with reference to the attached file `<file:shinji.png>`
+    - Please draw the protagonist with reference to the attached file `<file:img_ups/image.jpg>`
 
 - Overall setting:
     - Canvas size: {page_sizes[page_size]}
@@ -269,8 +260,8 @@ Please output a full color cartoon. Please give your best effort.
         #}
         
         filename = f'{chara_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-        imagefile = './results/'+filename+'.jpg'
-        promptfile= './results/'+filename+'.txt'
+        imagefile = results_path+'image_'+filename+'.jpg'
+        promptfile= results_path+'prompt_'+filename+'.txt'
 
         with open(promptfile, 'a', encoding='utf-8') as f:
             f.write(anime_prompt)
@@ -321,7 +312,8 @@ async def main2(chara_name, chara_out, img_up, page_style, llm_model, llm_key):
     return result
 
 def camera_nodetect(image):
-  return "please put image chara info: "
+    image.save("./img_ups/image.jpg")
+    return "please put image chara info: "
 
 def encode_image(image):
     byte_arr = io.BytesIO()
@@ -491,8 +483,8 @@ with gr.Blocks() as demo:
                 ], api_name="animaker")
     
     #with gr.Accordion(label="Anime history:", open=False):
-    #    hist_data = ret_data(5)
-    #    gr.Markdown(hist_data)
+        #hist_data = ret_data(5)
+        #gr.Markdown(hist_data)
 
 parser = argparse.ArgumentParser(description="Gradio UI for Browser Agent")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
