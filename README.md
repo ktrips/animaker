@@ -14,16 +14,16 @@ ANIME.Ktrips.net -
 $ git clone https://github.com/ktrips/animaker.git
 $ cd animaker
 $ gcloud services enable run.googleapis.com
-$ mkdir results
+$ mkdir results chara imgup
 $ vi .env
 ```
 ### Pepare AI API keys in .env file
 Get API keys for OpenAI, Google, and/or Anthropic.
 Create .env file with the API keys:
 ```text:.env
-chatgpt_key=XXXX
-gemini_key=YYYY
-claude_key=ZZZZ
+OPENAI_API_KEY=XXXX
+GOOGLE_API_KEY=YYYY
+ANTHOLOPOC_API_KEY=ZZZZ
 ```
 
 ### Go and get Google project ID and enable Google APIs

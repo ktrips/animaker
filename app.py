@@ -1,10 +1,8 @@
 import gradio as gr
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_anthropic import ChatAnthropic
-
-from browser_use import Agent
-
+#from langchain_anthropic import ChatAnthropic
+#from browser_use import Agent
 import asyncio
 import os, io, requests, json
 import base64
@@ -27,13 +25,13 @@ page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような�
 page_sizes= {"512 × 768": "512 × 768 (portrait orientation)", # "1024 × 1536 (portrait orientation)",
         "4コマ": "4コマ",
         "ポスター": "ポスター"}
-page_storys= {"Original": "主人公を中心として、入力されたページ構成を変更せず、忠実に従って下さい。",
+page_storys= {"Manual": "主人公を中心として、入力されたページ構成を変更せず、忠実に従って下さい。",
         "Generate": "主人公を中心としたストーリーを、ページ構成に従って、できる限り詳細に生成して下さい。",
         "Hybrid": "主人公を中心としたストーリーを、入力された情報に付加して、作り上げて下さい。"}
 
-llms = {"chatgpt": "gpt-4o-mini", #"gpt-image-1", #,
-        "gemini": "gemini-2.0-flash-exp",
-        "claude": "claude-3-5-sonnet-latest"}
+llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1", #,
+        "GOOGLE_API": "gemini-2.0-flash-exp",
+        "ANTHOLOPIC": "claude-3-5-sonnet-latest"}
 options = {"""
     temperature=0,
     max_tokens=None,
@@ -41,11 +39,11 @@ options = {"""
     max_retries=2
 """}
 
-default_model= "chatgpt"
-default_key  = "AI_Key..."
+default_model= "OPENAI_API"
+#default_key  = "AI_Key..."
 
 default_style= "Jp 90s"
-default_story= "Original"
+default_story= "Generate"
 
 page_size = "1024 x 1536"
 page_quality = "medium"
@@ -118,18 +116,19 @@ def get_cat(category):
     # print(cats, cat_ops, cat_urls)
     return cats, cat_ops, cat_urls
 
-def ret_data(dates=5):
-    hist_data = ""
+def ret_data(nums=5):
+    image_data = ""
     if os.path.isdir(results_path):
         files = os.listdir(results_path)
         for file in files:
-            json_open = open(results_path+file, 'r')
-            json_load = json.load(json_open)
+            #file_open = open(results_path+file, 'r')
+            #file_load = json.load(file_open)
             #hist_date = parse(json_load['timestamp']).strftime('%Y/%m/%d %H:%M:%S')
-            hist_data += f" <a href='{results_path}{file}'>" + json_load + "</a><br>"
+            if file[:4] == ".jpg":
+                image_data += f"<a href='{results_path}{file}'><img href='{results_path}{file}' width=100></a> "
     else:
-        hist_data = "No history files"
-    return hist_data
+        image_data = "No image files"
+    return image_data
 
 from openai import OpenAI
 import google.generativeai as gemini
@@ -147,18 +146,23 @@ async def save_data(chara_name: str, image_data: str):
         json.dump(output_data, f, ensure_ascii=False, indent=4)
     print(f"\nデータを {filename} に保存しました")
 
+
 async def main(prompt_out): #img_up, llm_model, prompt_out):
-    print("Starting Anime image generation!")
+    print("== Main Generation ==\n Starting Anime image generation!\n")
     llm_model=default_model
     #print(llm_model)
     #print(prompt_out)
-    apikey = os.getenv(llm_model+"_key")
-    generate_model = llms[llm_model]
+    #if llm_key:
+    #    apikey = llm_key
+    #else:
+    apikey = os.getenv(llm_model+"_KEY")
 
-    #image_base64 = encode_image(img_up) # open(img_up, "rb")
-    source_image = open('./img_ups/image.jpg', "rb")
+    img_up = './img_ups/image.jpg'
+    image_base64 = encode_image(img_up) # open(img_up, "rb")
+    source_image = open(img_up, "rb")
 
-    if llm_model == "gemini":
+    if llm_model == "GOOGLE_API":
+        generate_model = llms[llm_model]
         gemini.configure(api_key=apikey)
         generation_config = {
             "temperature": 0.1,
@@ -171,7 +175,7 @@ async def main(prompt_out): #img_up, llm_model, prompt_out):
         print(result)
         return result
 
-    elif llm_model == "chatgpt":
+    elif llm_model == "OPENAI_API":
         generate_model = "gpt-image-1"
         client = OpenAI(api_key=apikey)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
@@ -310,7 +314,7 @@ Please output a full color cartoon. Please give your best effort.
         "top_k": 1,
         "max_output_tokens": 2048,
     }
-    if llm_model == "gemini":
+    if llm_model == "GOOGLE_API":
         gemini.configure(api_key=apikey)
         gemini_client = gemini.GenerativeModel(llms[llm_model],generation_config=generation_config)
         response = gemini_client.generate_content([image_base64, anime_prompt])
@@ -318,16 +322,16 @@ Please output a full color cartoon. Please give your best effort.
         print(result)
         return result
 
-    elif llm_model == "chatgpt":
+    elif llm_model == "OPENAI_API":
         client = OpenAI(api_key=apikey)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
         response = client.images.edit(
             model  = llms[llm_model], #"gpt-image-1",
             image  = source_image,
             prompt = anime_prompt,
-            size   = page_size,
-            quality=page_quality,
-            n = generate_pages
+            #size   = page_size,
+            #quality=page_quality,
+            #n = generate_pages
         )
         image_response = response.data[0].b64_json
         
@@ -349,47 +353,13 @@ Please output a full color cartoon. Please give your best effort.
     
         return imagefile
 
-#from google.cloud import vision
-#from google.oauth2 import service_account
-#import base64
-
-#async def main(booka_out,category, llm_model,num_steps,llm_key):
-async def main2(chara_name, chara_out, img_up, page_style, llm_model, llm_key):
-
-    cat_ret = get_cat(category)
-    if llm_key:
-        apikey = llm_key
-    else:
-        apikey = os.getenv(llm_model+"_key")
-
-    if llm_model == "chatgpt":
-        llm_api = ChatOpenAI(model=llms[llm_model], api_key=apikey)
-    elif llm_model == "gemini":
-        llm_api = ChatGoogleGenerativeAI(model=llms[llm_model], api_key=apikey)
-    elif llm_model == "claude":
-        llm_api = ChatAnthropic(model_name=llms[llm_model], api_key=apikey)
-    LLM_MODEL = llm_model.upper()
-
-    agent = Agent(
-        task=f""" ABC """,
-        llm=llm_api,
-		#controller=controller,
-		browser=browser,
-    )
-    #info   = await book_info(book)
-    history= await agent.run(max_steps=num_steps)
-    result = history.final_result()
-    print(result)
-    await save_data(result, booka_out)
-    return result
-
 def plot_generate(img_up, chara_name, page_plot):
-    print("Starting Prompt creation for {chara_name} from Plot!")
+    print(f"== Prompt Generation ==\n Starting Prompt creation for {chara_name} from Plot!\n")
     llm_model=default_model
-    """if llm_key:
-        apikey = llm_key
-    else:"""
-    apikey = os.getenv(llm_model+"_key")
+    #if llm_key:
+    #    apikey = llm_key
+    #else:
+    apikey = os.getenv(llm_model+"_KEY")
 
     plot_prompt = f"""
 「{chara_name}」はこの話の主人公です。この主人公は、提供された画像のような年恰好、髪型、表情、服装をした人物です。
@@ -417,7 +387,7 @@ def plot_generate(img_up, chara_name, page_plot):
         "top_k": 1,
         "max_output_tokens": 2048,
     }
-    if llm_model == "gemini":
+    if llm_model == "GOOGLE_API":
         gemini.configure(api_key=apikey) #os.getenv("gemini_key"))
         gemini_client = gemini.GenerativeModel(llms[llm_model],generation_config=generation_config)
         response = gemini_client.generate_content([image_base64, plot_prompt])
@@ -425,7 +395,7 @@ def plot_generate(img_up, chara_name, page_plot):
         print(result)
         return result
 
-    elif llm_model == "chatgpt":
+    elif llm_model == "OPENAI_API":
         openai_client = OpenAI(api_key=apikey)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
         response = openai_client.chat.completions.create(
@@ -503,10 +473,11 @@ def encode_image(image):
 
 def camera_detect(image,llm_model):
     llm_model=default_model
-    """if llm_key:
-        apikey = llm_key
-    else:"""
-    apikey = os.getenv(llm_model+"_key")
+    #if llm_key:
+    #    apikey = llm_key
+    #else:
+    apikey = os.getenv(llm_model+"_KEY")
+
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
 
     image.save("./img_ups/image.jpg")
@@ -518,7 +489,7 @@ def camera_detect(image,llm_model):
         "top_k": 1,
         "max_output_tokens": 2048,
     }
-    if llm_model == "gemini":
+    if llm_model == "GOOGLE_API":
         gemini.configure(api_key=apikey)
         gemini_client = gemini.GenerativeModel(llms[llm_model],generation_config=generation_config)
         response = gemini_client.generate_content([image_base64, camera_prompt])
@@ -526,7 +497,7 @@ def camera_detect(image,llm_model):
         print(result)
         return result
 
-    elif llm_model == "chatgpt":
+    elif llm_model == "OPENAI_API":
         openai_client = OpenAI(api_key=apikey)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
         response = openai_client.chat.completions.create(
@@ -554,8 +525,6 @@ def camera_detect(image,llm_model):
 #img_up = gr.Image(label="Book Photo", sources="webcam",webcam_constraints=["rear"], 
 #                  type="pil", mirror_webcam=False, width=350,height=350)
 
-#llm_model="chatgpt"
-
 def flip(im):
     return np.fliplr(im)
 
@@ -569,20 +538,19 @@ with gr.Blocks() as demo:
             with gr.Tab("Generate"):
                 with gr.Row():
                     img_up = gr.Image(label="Chara Photo", sources="upload",
-                        type="pil", mirror_webcam=False, value=charas[default_chara][1], width=300,height=300)
+                        type="pil", mirror_webcam=False, value=charas[default_chara][1], width=250,height=250)
                                         
-                    chara_name= gr.Dropdown(choices=charas, label="Chara", value=default_chara, interactive=True) #Textbox(label="Chara Name", interactive=True)
+                    chara_name= gr.Dropdown(choices=charas, label="Chara", value=default_chara, interactive=True, scale=1) #Textbox(label="Chara Name", interactive=True)
                     chara_name.change(chara_picture, chara_name, img_up)
-                    
                     #page_title= gr.Textbox(label="Title", interactive=True)
-                    page_plot = gr.Textbox(label="Plot", interactive=True)
+                    page_plot = gr.Textbox(label="Plot", interactive=True, scale=2)
 
-                    prompt_out= gr.Textbox(label="Prompt", max_lines=100, placeholder="Upload photo & plot, and edit results", interactive=True)
+                    prompt_out= gr.Textbox(label="Prompt", max_lines=100, placeholder="Upload photo & plot, and edit results", interactive=True, scale=2)
                     gr.Interface(fn=plot_generate, #camera_nodetect, #camera_detect,
                         inputs=[img_up, chara_name,page_plot], outputs=prompt_out, #live=True, 
                         flagging_mode="never", clear_btn=None)
                     
-            with gr.Tab("Original"):
+            with gr.Tab("Manual"):
                 with gr.Row():
                     chara_name= gr.Textbox(label="Chara Name", interactive=True)
                     page_title= gr.Textbox(label="Title", interactive=True)
@@ -644,10 +612,10 @@ with gr.Blocks() as demo:
                     with gr.Tab("General"):
                         page_style= gr.Dropdown(choices=page_styles,label="Anime Style", value=default_style, interactive=True)
                         #page_size = gr.Dropdown(choices=page_sizes,label="Canvas size", value=default_size, interactive=True)
-                        page_story= gr.Dropdown(choices=page_storys,label="Original/Generate", value=default_story, interactive=True)
+                        page_story= gr.Dropdown(choices=page_storys,label="Generate/Manual", value=default_story, interactive=True)
 
                         llm_model= gr.Dropdown(choices=llms,label="LLM", interactive=True, value=default_model)
-                        llm_key  = gr.Textbox(label="LLM API Key",value=default_key,placeholder="Paste your LLM API key here", interactive=True,)
+                        llm_key  = gr.Textbox(label="LLM API Key", interactive=True,) #value=default_key,placeholder="Paste your LLM API key here",)
                         num_steps= gr.Slider(minimum=1,maximum=20,value=default_steps,step=1, label="Steps",interactive=True)
 
                     with gr.Tab("Charactors"):
@@ -698,11 +666,11 @@ with gr.Blocks() as demo:
                     #gr.Textbox(label="Error Messages"),
                 ], api_name="animaker")
     
-    #with gr.Accordion(label="Anime history:", open=False):
-        #hist_data = ret_data(5)
-        #gr.Markdown(hist_data)
+    with gr.Accordion(label="Anime Gallery:", open=False):
+        hist_data = ret_data(5)
+        gr.Markdown(hist_data)
 
-parser = argparse.ArgumentParser(description="Gradio UI for Browser Agent")
+parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
 parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
