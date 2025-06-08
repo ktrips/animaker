@@ -158,8 +158,8 @@ async def main(prompt_out): #img_up, llm_model, prompt_out):
     #else:
     apikey = os.getenv(llm_model+"_KEY")
 
-    image_base64 = encode_image(img_up_path) # open(img_up, "rb")
     source_image = open(img_up_path, "rb")
+    #image_base64 = encode_image(source_image) # open(img_up, "rb")
 
     if llm_model == "GOOGLE_API":
         generate_model = llms[llm_model]
@@ -675,4 +675,4 @@ parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to b
 parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
 
-demo.launch(server_name=args.ip,server_port=args.port) #, auth=("usr","pswd"))
+demo.launch(server_name=args.ip,server_port=args.port) #, auth=("usr","pswd1"))
