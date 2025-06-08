@@ -55,7 +55,8 @@ default_cat  = "Book"
 #result_folder= "./results"
 #up_folder    = "./up"
 results_path = './results/'
-imgup_path= "./img_ups/"
+image_path = "./image/"
+img_up_path= image_path+'img_up.jpg'
 chara_path = "./chara/"
 
 default_chara= "シンジ"
@@ -157,9 +158,8 @@ async def main(prompt_out): #img_up, llm_model, prompt_out):
     #else:
     apikey = os.getenv(llm_model+"_KEY")
 
-    img_up = './img_ups/image.jpg'
-    image_base64 = encode_image(img_up) # open(img_up, "rb")
-    source_image = open(img_up, "rb")
+    image_base64 = encode_image(img_up_path) # open(img_up, "rb")
+    source_image = open(img_up_path, "rb")
 
     if llm_model == "GOOGLE_API":
         generate_model = llms[llm_model]
@@ -228,7 +228,7 @@ Please output a full color cartoon. Please give your best effort.
   - 主人公:
     - 名前：{chara_name}
     - 年齢、性別、髪型、表情、服装：{chara_out}
-    - Please draw the protagonist with reference to the attached file `<file:img_ups/image.jpg>`
+    - Please draw the protagonist with reference to the attached file `<file:{img_up_path}>`
 
 - Overall setting:
     - Canvas size: {page_size}
@@ -306,7 +306,7 @@ Please output a full color cartoon. Please give your best effort.
     #    f.write(base64.b64decode(response.data[0].b64_json))
     #with open(image_path, "rb") as image_file:
     #    return base64.b64encode(image_file.read()).decode('utf-8')
-    source_image = open('./img_ups/image.jpg', "rb")
+    source_image = open(img_up, "rb")
 
     generation_config = {
         "temperature": 0.1,
@@ -378,7 +378,7 @@ def plot_generate(img_up, chara_name, page_plot):
     - その他の登場人物: もし他の登場人物がいたら、表示して下さい。
     """
 
-    img_up.save("./img_ups/image.jpg")
+    img_up.save(img_up_path)
     image_base64 = encode_image(img_up)
 
     generation_config = {
@@ -433,8 +433,8 @@ Please output a full color cartoon. Please give your best effort.
 - Character Information
   - 主人公:
     - 名前：{chara_name}
-    - Please draw the protagonist with reference to the attached file `<file:img_ups/image.jpg>`
-    - 年齢、性別、髪型、表情、服装： Please estimate the protagonist's face and outfit based on the attached file `<file:img_ups/image.jpg>`
+    - Please draw the protagonist with reference to the attached file `<file:{img_up_path}>`
+    - 年齢、性別、髪型、表情、服装： Please estimate the protagonist's face and outfit based on the attached file `<file:{img_up_path}>`
 
 - Overall setting:
     - Canvas size: {page_size}
@@ -462,7 +462,7 @@ Please output a full color cartoon. Please give your best effort.
         return anime_prompt
 
 def camera_nodetect(image):
-    image.save("./img_ups/image.jpg")
+    image.save(img_up_path)
     return "please put image chara info: "
 
 def encode_image(image):
@@ -480,7 +480,7 @@ def camera_detect(image,llm_model):
 
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
 
-    image.save("./img_ups/image.jpg")
+    image.save(img_up_path)
 
     image_base64 = encode_image(image)
     generation_config = {

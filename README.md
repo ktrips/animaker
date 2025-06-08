@@ -30,13 +30,17 @@ ANTHOLOPOC_API_KEY=ZZZZ
 
 ### Create Docker environment
 ```
-$ docker build --platform=linux/amd64 -t asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1 .
-$ docker run -p 8080:8080 -e CHROME_PERSISTENT_SESSION=true asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1
+$ docker build --platform=linux/amd64 -t asia-northeast1-docker.pkg.dev/[your_project]/animaker-repo/animaker:v1 .
+$ docker run -p 8080:8080 asia-northeast1-docker.pkg.dev/[your_project]/animaker-repo/animaker:v1
 ```
 
-### Push and deploy docker environment to Gloud
+### Push and deploy docker environment to GCloud
 
 ```
-$ docker push asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1
-$ gcloud run deploy animaker --image=asia-northeast1-docker.pkg.dev/[your_project]/animaker:v1 --memory=1Gi --port=8080 --allow-unauthenticated --platform=managed --region=asia-northeast1
+$ gcloud artifacts repositories create animaker-repo --repository-format=docker --location=asia-northeast1 --description="Docker repository for Cloud Run Anime Maker"
+$ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+$ docker push asia-northeast1-docker.pkg.dev/[your_project]/animaker-repo/animaker:v1
+$ gcloud run deploy animaker --image=asia-northeast1-docker.pkg.dev/[your_project]/animaker-repo/animaker:v1 --memory=1Gi --port=8080 --allow-unauthenticated --platform=managed --region=asia-northeast1
 ```
+
+Now you can access https://animaker-xxxx.asia-northeast1.run.app or AniMaker.Ktrips.net! Enjoy!
