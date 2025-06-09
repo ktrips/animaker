@@ -606,6 +606,14 @@ with gr.Blocks() as demo:
                     panel4_others= gr.Textbox(label="Other charactors", interactive=True)
                 """
 
+            with gr.Tab("Camera"):
+                with gr.Row():
+                    page_title= gr.Textbox(label="Title", interactive=True)
+                    chara_out = gr.Textbox(label="Charactor",placeholder="Upload photo and edit results",interactive=True)
+                    camera    = gr.Interface(fn=camera_detect,
+                        inputs=[img_up], outputs=chara_out, live=True, 
+                        flagging_mode="never", clear_btn=None)
+
         with gr.Column():
             with gr.Accordion(label="Anime Options:", open=False):
                 with gr.Column():
@@ -616,6 +624,7 @@ with gr.Blocks() as demo:
 
                         llm_model= gr.Dropdown(choices=llms,label="LLM", interactive=True, value=default_model)
                         llm_key  = gr.Textbox(label="LLM API Key", interactive=True,) #value=default_key,placeholder="Paste your LLM API key here",)
+                        llm_usage= gr.Markdown("https://platform.openai.com/usage")
                         num_steps= gr.Slider(minimum=1,maximum=20,value=default_steps,step=1, label="Steps",interactive=True)
 
                     with gr.Tab("Charactors"):
@@ -675,4 +684,4 @@ parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to b
 parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
 
-demo.launch(server_name=args.ip,server_port=args.port) #, auth=("usr","pswd1"))
+demo.launch(server_name=args.ip,server_port=args.port, auth=("usr","pswd1"))
