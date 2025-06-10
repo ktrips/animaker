@@ -147,6 +147,59 @@ async def save_data(chara_name: str, image_data: str):
         json.dump(output_data, f, ensure_ascii=False, indent=4)
     print(f"\nデータを {filename} に保存しました")
 
+async def add_chara(chara_up, chara_name, chara_desc): #, prompt_out, #img_up, llm_model, prompt_out):
+    print("== Chara Generation ==\n Starting Anime image generation!\n")
+    llm_model=default_model
+    #print(llm_model)
+    #print(prompt_out)
+    #if llm_key:
+    #    apikey = llm_key
+    #else:
+    apikey = os.getenv(llm_model+"_KEY")
+    source_image = open(chara_up, "rb")
+    image_base64 = encode_image(source_image) # open(img_up, "rb")
+
+    anime_prompt= "ここに写っている人物を、日本の90年代アニメ風の画像に変換して下さい。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイルです。画像のみを出力して下さい。"
+
+    if llm_model == "GOOGLE_API":
+        generate_model = llms[llm_model]
+        gemini.configure(api_key=apikey)
+        generation_config = {
+            "temperature": 0.1,
+            "top_p": 1,
+            "top_k": 1,
+            "max_output_tokens": 2048}
+        gemini_client = gemini.GenerativeModel(generate_model, generation_config=generation_config)
+        response = gemini_client.generate_content([image_base64, anime_prompt])
+        result = response.text
+        print(result)
+        return result
+
+    elif llm_model == "OPENAI_API":
+        generate_model = "gpt-image-1"
+        client = OpenAI(api_key=apikey)
+        #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
+        response = client.images.edit(
+            model  = generate_model, #llms[llm_model], #"gpt-image-1",
+            image  = source_image,
+            prompt = anime_prompt
+            #size   = page_size,
+            #quality=page_quality,
+            #n = generate_pages
+        )
+        image_response = response.data[0].b64_json
+        #filename  = "chara_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+        imagefile = chara_path+chara_name+'_anime.jpg'
+        #with open(results_path+filename+'_prompt.txt', 'a', encoding='utf-8') as f:
+                #f.write(prompt_out)
+                #json.dump(anime_prompt, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',',': '))
+        with open(imagefile, "wb") as f:
+            f.write(base64.b64decode(image_response))
+
+        chara_set = {chara_name: [chara_name, imagefile, chara_desc]}
+        print(chara_set)
+    
+        return imagefile
 
 async def main(prompt_out): #img_up, llm_model, prompt_out):
     print("== Main Generation ==\n Starting Anime image generation!\n")
@@ -157,7 +210,6 @@ async def main(prompt_out): #img_up, llm_model, prompt_out):
     #    apikey = llm_key
     #else:
     apikey = os.getenv(llm_model+"_KEY")
-
     source_image = open(img_up_path, "rb")
     #image_base64 = encode_image(source_image) # open(img_up, "rb")
 
@@ -605,7 +657,7 @@ with gr.Blocks() as demo:
                     #panel4_face = gr.Textbox(label="Face", interactive=True)
                     panel4_others= gr.Textbox(label="Other charactors", interactive=True)
                 """
-
+            """
             with gr.Tab("Camera"):
                 with gr.Row():
                     page_title= gr.Textbox(label="Title", interactive=True)
@@ -613,6 +665,7 @@ with gr.Blocks() as demo:
                     camera    = gr.Interface(fn=camera_detect,
                         inputs=[img_up], outputs=chara_out, live=True, 
                         flagging_mode="never", clear_btn=None)
+            """
 
         with gr.Column():
             with gr.Accordion(label="Anime Options:", open=False):
@@ -632,34 +685,15 @@ with gr.Blocks() as demo:
                             with gr.Row(chara):
                                 chara_image= gr.Image(charas[chara][1], label=chara)
                                 chara_chara= gr.Markdown(charas[chara][2])
-                        """
-                        with gr.Row("Shinji"):
-                            #chara1_name = gr.Markdown("シンジ")
-                            chara1_image= gr.Image(charas["シンジ"][0], label="Shinji")
-                            chara1_chara= gr.Markdown(charas["シンジ"][1])
-                        with gr.Row("Noriko"):
-                            #chara2_name = gr.Markdown("ノリコ")
-                            chara2_image= gr.Image(charas["ノリコ"][0],label="Noriko")
-                            chara2_chara= gr.Markdown(charas["ノリコ"][1])
-                        with gr.Row("Harada"):
-                            #chara3_name = gr.Markdown("ハラダ")
-                            chara3_image= gr.Image(charas["ハラダ"][0], label="Harada")
-                            chara3_chara= gr.Markdown(charas["ハラダ"][1])
-                        with gr.Row("Goto"):
-                            #chara4_name = gr.Markdown("ゴトー")
-                            chara4_image= gr.Image(charas["ゴトー"][0], label="Goto")
-                            chara4_chara= gr.Markdown(charas["ゴトー"][1])
-                        with gr.Row("Matsui"):
-                            #chara5_name = gr.Markdown("マツイ")
-                            chara5_image= gr.Image(charas["マツイ"][0], label="Matsui")
-                            chara5_chara= gr.Markdown(charas["マツイ"][1])
-                        with gr.Row("Ken"):
-                            #chara6_name = gr.Markdown("僕")
-                            chara6_image= gr.Image(charas["ケン"][0], label="Ken")
-                            chara6_chara= gr.Markdown(charas["ケン"][1])
-                        """
+                        with gr.Row():
+                            chara_name= gr.Textbox(label="Chara Name", interactive=True)
+                            chara_desc= gr.Textbox(label="Charactor", placeholder="Add photo and chara desc", interactive=True)
+                            chara_up = gr.Image(label="Add Chara", sources="upload",
+                                type="pil", mirror_webcam=False, width=200,height=200)
+                            chara_btn = gr.Button("Add Chara")
+                            chara_btn.click(fn=add_chara, inputs=[chara_up,chara_name,chara_desc],
+                                outputs=[gr.Image(label="Chara",width=200,height=200)], api_name="addchara")
 
-    #output = gr.Markdown("ANIME Reuslt:")
     search_btn = gr.Button("AniMake!")
     search_btn.click(fn=main, inputs=prompt_out,
                 outputs=[
