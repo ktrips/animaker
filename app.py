@@ -117,19 +117,22 @@ def get_cat(category):
     # print(cats, cat_ops, cat_urls)
     return cats, cat_ops, cat_urls
 
-def ret_data(nums=5):
-    image_data = ""
+def ret_data(nums):
+    image_list = []
     if os.path.isdir(results_path):
-        files = os.listdir(results_path)
-        for file in files:
+        files= os.listdir(results_path)
+        #sorted_file_names = sorted(file_names)
+        for file in sorted(files):
             #file_open = open(results_path+file, 'r')
             #file_load = json.load(file_open)
             #hist_date = parse(json_load['timestamp']).strftime('%Y/%m/%d %H:%M:%S')
-            if file[:4] == ".jpg":
-                image_data += f"<a href='{results_path}{file}'><img href='{results_path}{file}' width=100></a> "
+            if file[-4:] == ".jpg":
+                image_list.append(results_path+file)
+                #f"<a href='{results_path}{file}'><img href='{results_path}{file}' width=100></a> "
     else:
-        image_data = "No image files"
-    return image_data
+        image_list = "No image files"
+    print(image_list)
+    return image_list
 
 from openai import OpenAI
 import google.generativeai as gemini
@@ -619,7 +622,7 @@ with gr.Blocks() as demo:
                         panel_naration = gr.Textbox(label="Naration", interactive=True)
                         #panel1_onomatope= gr.Textbox(label="Onomatope", interactive=True)
                         #panel1_face  = gr.Textbox(label="Face", interactive=True)
-                        panel_others= gr.Textbox(label="Other charactors", interactive=True)
+                        gr.Textbox(label="Other charactors", elem_id="Other_"+str(panel), interactive=True)
                 """
                 with gr.Row():
                     #panel1_size= gr.Dropdown(choices=panel_sizes,label="Panel1 Size", interactive=True)
@@ -669,30 +672,27 @@ with gr.Blocks() as demo:
 
         with gr.Column():
             with gr.Accordion(label="Anime Options:", open=False):
-                with gr.Column():
-                    with gr.Tab("General"):
-                        page_style= gr.Dropdown(choices=page_styles,label="Anime Style", value=default_style, interactive=True)
-                        #page_size = gr.Dropdown(choices=page_sizes,label="Canvas size", value=default_size, interactive=True)
-                        page_story= gr.Dropdown(choices=page_storys,label="Generate/Manual", value=default_story, interactive=True)
+                page_style= gr.Dropdown(choices=page_styles,label="Anime Style", value=default_style, interactive=True)
+                #page_size = gr.Dropdown(choices=page_sizes,label="Canvas size", value=default_size, interactive=True)
+                page_story= gr.Dropdown(choices=page_storys,label="Generate/Manual", value=default_story, interactive=True)
 
-                        llm_model= gr.Dropdown(choices=llms,label="LLM", interactive=True, value=default_model)
-                        llm_key  = gr.Textbox(label="LLM API Key", interactive=True,) #value=default_key,placeholder="Paste your LLM API key here",)
-                        llm_usage= gr.Markdown("https://platform.openai.com/usage")
-                        num_steps= gr.Slider(minimum=1,maximum=20,value=default_steps,step=1, label="Steps",interactive=True)
-
-                    with gr.Tab("Charactors"):
-                        for chara in charas:
-                            with gr.Row(chara):
-                                chara_image= gr.Image(charas[chara][1], label=chara)
-                                chara_chara= gr.Markdown(charas[chara][2])
-                        with gr.Row():
-                            chara_name= gr.Textbox(label="Chara Name", interactive=True)
-                            chara_desc= gr.Textbox(label="Charactor", placeholder="Add photo and chara desc", interactive=True)
-                            chara_up = gr.Image(label="Add Chara", sources="upload",
-                                type="pil", mirror_webcam=False, width=200,height=200)
-                            chara_btn = gr.Button("Add Chara")
-                            chara_btn.click(fn=add_chara, inputs=[chara_up,chara_name,chara_desc],
-                                outputs=[gr.Image(label="Chara",width=200,height=200)], api_name="addchara")
+                llm_model= gr.Dropdown(choices=llms,label="LLM", interactive=True, value=default_model)
+                llm_key  = gr.Textbox(label="LLM API Key", interactive=True,) #value=default_key,placeholder="Paste your LLM API key here",)
+                llm_usage= gr.Markdown("https://platform.openai.com/usage")
+                num_steps= gr.Slider(minimum=1,maximum=20,value=default_steps,step=1, label="Steps",interactive=True)
+            with gr.Accordion(label="Charactors:", open=False):
+                for chara in charas:
+                    with gr.Row(chara):
+                        chara_image= gr.Image(charas[chara][1], label=chara)
+                        chara_chara= gr.Markdown(charas[chara][2])
+                with gr.Row():
+                    chara_name= gr.Textbox(label="Chara Name", interactive=True)
+                    chara_desc= gr.Textbox(label="Charactor", placeholder="Add photo and chara desc", interactive=True)
+                    chara_up = gr.Image(label="Add Chara", sources="upload",
+                        type="pil", mirror_webcam=False, width=200,height=200)
+                    chara_btn = gr.Button("Add Chara")
+                    chara_btn.click(fn=add_chara, inputs=[chara_up,chara_name,chara_desc],
+                        outputs=[gr.Image(label="Chara",width=200,height=200)], api_name="addchara")
 
     search_btn = gr.Button("AniMake!")
     search_btn.click(fn=main, inputs=prompt_out,
@@ -710,8 +710,7 @@ with gr.Blocks() as demo:
                 ], api_name="animaker")
     
     with gr.Accordion(label="Anime Gallery:", open=False):
-        hist_data = ret_data(5)
-        gr.Markdown(hist_data)
+        gr.Gallery(ret_data(5), columns=6, show_label=True, show_download_button=True, show_share_button=True, allow_preview=True)
 
 parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
