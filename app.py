@@ -67,7 +67,9 @@ charas = {
     "ハラダ": ["Harada", chara_path+"harada_anime.jpg","黒いトライアスロンウェアを着た、40代の若手経営者。キラキラして自信ありげな笑みを浮かべる。"],
     "マツイ": ["Matsui", chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。"],
     "ケン":   ["Ken",    chara_path+"ken_anime.jpg","赤いトライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。"],
-    "その他": ["Other",  chara_path+"others_anime.jpg","その他のメンバー"]
+    "その他": ["Other",  chara_path+"others_anime.jpg","その他のメンバー"],
+    "ナオト": ["Naoto",  chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている。"],
+    "ケー":   ["K",      chara_path+"k_anime.jpg","ケーは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている。"],
 }
 
 panel_sizes = {"Small": "Small size",
@@ -159,8 +161,11 @@ async def add_chara(chara_up, chara_name, chara_desc): #, prompt_out, #img_up, l
     #    apikey = llm_key
     #else:
     apikey = os.getenv(llm_model+"_KEY")
-    source_image = open(chara_up, "rb")
-    image_base64 = encode_image(source_image) # open(img_up, "rb")
+
+    chara_img = chara_path+chara_name+".jpg"
+    chara_up.save(chara_path)
+    source_image = open(chara_img, "rb")
+    image_base64 = encode_image(chara_up) # open(img_up, "rb")
 
     anime_prompt= "ここに写っている人物を、日本の90年代アニメ風の画像に変換して下さい。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイルです。画像のみを出力して下さい。"
 
@@ -199,8 +204,9 @@ async def add_chara(chara_up, chara_name, chara_desc): #, prompt_out, #img_up, l
         with open(imagefile, "wb") as f:
             f.write(base64.b64decode(image_response))
 
-        chara_set = {chara_name: [chara_name, imagefile, chara_desc]}
-        print(chara_set)
+        new_chara_set = {chara_name: [chara_name, imagefile, chara_desc]}
+        print(new_chara_set)
+        charas.append(new_chara_set)
     
         return imagefile
 
@@ -686,29 +692,33 @@ with gr.Blocks() as demo:
                         chara_image= gr.Image(charas[chara][1], label=chara)
                         chara_chara= gr.Markdown(charas[chara][2])
                 with gr.Row():
-                    chara_name= gr.Textbox(label="Chara Name", interactive=True)
-                    chara_desc= gr.Textbox(label="Charactor", placeholder="Add photo and chara desc", interactive=True)
-                    chara_up = gr.Image(label="Add Chara", sources="upload",
+                    chara_name= gr.Textbox(label="Add Chara Name", interactive=True)
+                    chara_desc= gr.Textbox(label="Chara Description", placeholder="Add photo and chara description", interactive=True)
+                    chara_up = gr.Image(label="Person's photo", sources="upload",
                         type="pil", mirror_webcam=False, width=200,height=200)
-                    chara_btn = gr.Button("Add Chara")
+                    chara_btn = gr.Button("Add Anime Chara")
                     chara_btn.click(fn=add_chara, inputs=[chara_up,chara_name,chara_desc],
-                        outputs=[gr.Image(label="Chara",width=200,height=200)], api_name="addchara")
+                        outputs=[gr.Image(label="Generated Anime Chara",width=200,height=200)], api_name="addchara")
 
     search_btn = gr.Button("AniMake!")
-    search_btn.click(fn=main, inputs=prompt_out,
-                outputs=[
-                    gr.Image(
-                        label="ANIME Result:",
-                    #gr.Gallery(
-                        #show_label=True,
-                        #elem_id="Gallery",
-                        #columns=[2],
-                        #object_fit="contain",
-                        #height="auto",
-                    ),
-                    #gr.Textbox(label="Error Messages"),
-                ], api_name="animaker")
-    
+    output_image = gr.Image()
+    search_btn.click(fn=main, inputs=prompt_out,outputs=output_image, api_name="animaker")
+    """
+    [gr.Image(
+        label="ANIME Result:",
+    #gr.Gallery(
+        #show_label=True,
+        #elem_id="Gallery",
+        #columns=[2],
+        #object_fit="contain",
+        #height="auto",
+    ),
+    #gr.Textbox(label="Error Messages"),
+    ],
+    """
+    sns_image = image_path+"sns3.jpg" 
+    twitter_mark= gr.Markdown(f'<a href="https://x.com/intent/post?text=100日でアイアンマンになる物語%20残り◯日%20&url=https%3A%2F%2Fktrips.net%2F100-days-to-ironman%2F&hashtags=ironman100&openExternalBrowser=1">Post SNS</a>') #<img src={sns_image}></a>')
+
     with gr.Accordion(label="Anime Gallery:", open=False):
         gr.Gallery(ret_data(5), columns=6, show_label=True, show_download_button=True, show_share_button=True, allow_preview=True)
 
