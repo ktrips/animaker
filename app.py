@@ -21,8 +21,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル",
-        "Ghible": "ジブリ風",
-        "Dragonquest": "鳥山明のドラゴンクエストスタイル"}
+        "Ghibli": "スタジオジブリ風のアニメイラストに変換。自然豊かな背景、柔らかい線画、温かみのある色合いを表現。",
+        "Pixar": "ディズニー・ピクサー風の3Dアニメスタイルに変換。大きな瞳、立体的な質感、明るい色合いで描画。",
+        "Jojo": "アニメのジョジョ風（ジョジョの奇妙な冒険）に変換。太い輪郭線、激しい陰影、ポーズを強調し、カラフルな背景でジョジョの奇妙な冒険風にする。",
+        "Dragonquest": "ドラゴンクエスト風に変換。鳥山明風のイラストで、剣や魔法、明るいファンタジー世界の背景、ポップな表情で描いてください。",
+        "Slumdank": "アニメのスラムダンク風に変換してください。ユニフォームを着て、汗や動きのあるポーズ、青春漫画風のリアルな線画で描いてください。",
+        "Pokemon": "ポケモン風のキャラクターデザインに変換。アニメタッチでかわいらしく、明るい色合いで仕上げ。",
+        "Eva": "エヴァンゲリオン風に変換。モダンなメカニカルデザインと、ダークでシリアスな色調を追加。",
+        "Kimetsu": "鬼滅の刃風に変換。和装デザインと、呼吸技のエフェクトを加えたスタイリッシュなタッチにする。",
+        "Akira": "アニメのAKIRA風に変換。ネオ東京の荒廃した都市を背景に、赤いバイクに乗ったキャラクターを描く。赤や黒を基調とした色使いで、ネオンライトや未来的な都市の雰囲気を追加。",
+        "Ukiyoe": "浮世絵の葛飾北斎風に変換。太い輪郭線と落ち着いた和風色彩で描き、背景には浮世絵スタイルの山や波を加える。",
+        "Retro": "レトロゲーム風に変換。8bitドット絵スタイルで、カラフルかつレトロな雰囲気にする。",
+        "Chikawa": "ちいかわ風に変換してください。丸くて小さな体型、シンプルな線画、ほのぼのした背景で描いてください。"}
+
 page_sizes= {"512×768": "512 × 768 (portrait orientation)",
             "1024x1536": "1024 × 1536 (portrait orientation)",
             "4コマ": "4コマ",
@@ -30,8 +41,9 @@ page_sizes= {"512×768": "512 × 768 (portrait orientation)",
 page_storys= {"Manual": "主人公を中心として、入力されたページ構成を変更せず、忠実に従って下さい。",
         "Generate": "主人公を中心としたストーリーを、ページ構成に従って、できる限り詳細に生成して下さい。",
         "Hybrid": "主人公を中心としたストーリーを、入力された情報に付加して、作り上げて下さい。"}
-image_qualities = ["low","medium","high"]
-generate_pages  = [1,2,3,4,5]
+image_qualities= ["low","medium","high"]
+generate_pages = [1,2,3,4,5]
+page_panels    = [1,2,3,4,5]
 
 colors = ["指定なし","黒","茶","赤","青","黄","緑","紫","ピンク","オレンジ","白"]
 
@@ -52,6 +64,7 @@ default_story= "Generate"
 default_size   = "1024x1536" #"1536x1024" #"1024x1024"
 default_quality= "high"
 default_page   = 1
+default_panel  = 5
 
 default_color = "指定なし"
 
@@ -73,9 +86,9 @@ charas = {
     "ハラダ": ["Harada", chara_path+"harada_anime.jpg","オレンジのトライアスロンウェアを着た、40代の若手経営者。髪はお洒落なパーマで金髪。キラキラして自信ありげな笑みを浮かべる","金"],
     "マツイ": ["Matsui", chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。髪の毛はミディアムで緑色","紫"],
     "ケン":   ["Ken",    chara_path+"ken_anime.jpg","緑のトライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","緑"],
-    "その他": ["Other",  chara_path+"others_anime.jpg","その他のメンバー","それぞれ"],
     "ナオト": ["Naoto",  chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
     "ケニー":  ["Kenny", chara_path+"kenny_anime.jpg","ケニーは世界中を旅している20代の大学生。引き締まった体をしている","赤"],
+    "New":   ["new",  chara_path+"others_anime.jpg","それぞれメンバーの仲間たち","黒"],
 }
 
 panel_sizes = {"Small": "Small size",
@@ -217,7 +230,7 @@ async def add_chara(chara_up, chara_name, chara_desc, chara_color): #, prompt_ou
 
         new_chara_set = {chara_name: [chara_name, imagefile, chara_desc, chara_color]}
         print(new_chara_set)
-        charas.append(new_chara_set)
+        #charas.append(new_chara_set)
     
         return imagefile
 
@@ -426,17 +439,45 @@ Please output a full color cartoon. Please give your best effort.
     
         return imagefile
 
-def plot_generate(img_up, chara_name, page_plot):
+def plot_generate(img_up, chara_name, page_plot, title_plot):
     print(f"== Prompt Generation ==\n Starting Prompt creation for {chara_name} from Plot!\n")
     llm_model=default_model
     #if llm_key:
     #    apikey = llm_key
     #else:
     apikey = os.getenv(llm_model+"_KEY")
+    openai_client = OpenAI(api_key=apikey)
+
+    img_up.save(img_up_path)
+    image_base64 = encode_image(img_up)
+
+    if title_plot == "Title":
+        response = openai_client.chat.completions.create(
+            model=llms[llm_model],
+            messages = [
+                {'role': 'system',
+                    'content': "このシステムは、テキストが提供された時に、それをタイトルとした物語のあらすじを3００字程度で、起承転結を付けて生成します。"},
+                {'role': 'user',
+                    'content': [
+                        {'type': 'text',
+                         'text': page_plot},
+                        {'type': 'image_url',
+                         'image_url': {'url': image_base64}},
+                    ]
+                },
+            ],
+            temperature = 0.9,
+            max_tokens = 2048, #256,
+        )
+        plot_result = response.choices[0].message.content
+        print("Plot from Title: "+plot_result)
+        use_plot = plot_result
+    else:
+        use_plot = page_plot
 
     plot_prompt = f"""
 「{chara_name}」はこの話の主人公です。この主人公は、{charas[chara_name][2]}のような風貌で、{charas[chara_name][3]}色の髪の毛、そのシーンに合った服装、表情をした人物です。
-プロット「{page_plot}」から、5つのPanelを作り、各Panel毎に以下のフォーマットに従って、5つのpanelを記述したプロンプトを作成してください。
+プロット「{use_plot}」から、5つのPanelを作り、各Panel毎に以下のフォーマットに従って、5つのpanelを記述したプロンプトを作成してください。
 プロットに記述したランドマークや商品はなるべく正確に写実的に表現して絵柄に入れて下さい。
 各Panelのフォーマット。このフォーマットを元に5つのPanelを作って下さい。
 - Panel layout:
@@ -450,9 +491,6 @@ def plot_generate(img_up, chara_name, page_plot):
     - 主人公: このPanelのシーンに最適な主人公の表情を類推し表示して下さい。
     - その他の登場人物: もし他の登場人物がいたら、表示して下さい。
     """
-
-    img_up.save(img_up_path)
-    image_base64 = encode_image(img_up)
 
     generation_config = {
         "temperature": 0.1,
@@ -469,7 +507,7 @@ def plot_generate(img_up, chara_name, page_plot):
         return result
 
     elif llm_model == "OPENAI_API":
-        openai_client = OpenAI(api_key=apikey)
+        #openai_client = OpenAI(api_key=apikey)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
         response = openai_client.chat.completions.create(
             model=llms[llm_model],
@@ -489,7 +527,7 @@ def plot_generate(img_up, chara_name, page_plot):
             max_tokens = 2048, #256,
         )
         result = response.choices[0].message.content
-        print(result)
+        print("Generated Plot: "+result)
 
         anime_prompt = f"""
 # Prerequisites:
@@ -540,7 +578,7 @@ Please output a full color cartoon. Please give your best effort.
         return anime_prompt
 
 
-async def plot_image_generate(img_up, chara_name, page_plot):
+async def plot_image_generate(img_up,chara_name,page_plot,page_panel):
     print(f"== Prompt Image Generation ==\n From prompt directly generate Image for {chara_name}!\n")
     llm_model=default_model
     #print(llm_model)
@@ -550,14 +588,17 @@ async def plot_image_generate(img_up, chara_name, page_plot):
     #else:
     apikey = os.getenv(llm_model+"_KEY")
 
-    if len(page_plot) < 30:
-        page_plot = plot_generate(page_plot)
+    if len(page_plot) < 40:
+        page_plot = plot_generate(img_up,chara_name,page_plot,"Title")
+
+    if chara_name == "New":
+        img_up = add_chara(img_up, chara_name, page_plot, charas[chara_name][3])
 
     plot_prompt = f"""
 「{chara_name}」はこの話の主人公です。この主人公は、{charas[chara_name][2]}のような風貌で、{charas[chara_name][3]}色の髪の毛、そのシーンに合った服装、表情をした人物です。
-プロット「{page_plot}」から、5つのPanelを作り、各Panel毎に以下のフォーマットに従って、5つのpanelを記述したプロンプトを作成してください。
+プロット「{page_plot}」から、{page_panel}つのPanelを作り、各Panel毎に以下のフォーマットに従って、{page_panel}つのpanelを記述したプロンプトを作成してください。
 プロットに記述したランドマークや商品はなるべく正確に写実的に表現して絵柄に入れて下さい。
-各Panelのフォーマット。このフォーマットを元に5つのPanelを作って下さい。
+各Panelのフォーマット。このフォーマットを元に{page_panel}つのPanelを作って下さい。
 - Panel layout:
  - Panel
   - Panel composition: このPanelにピッタリなショットを、フルショット、ワイドショット、ミディアムショット、クローズアップショットから選んで下さい。
@@ -705,8 +746,8 @@ Please output a full color cartoon. Please give your best effort.
 
         gr.set_static_paths(paths=[Path.cwd().absolute()/"results"])
 
-        sns_link= f'<a href="https://x.com/intent/post?text=100日でアイアンマンになる物語%20残り◯日%20https%3A%2F%2Fanime.ktrips.net%2F&url={gradio_path}{imagefile}&hashtags=ironman100&openExternalBrowser=1">Post SNS</a>' #<img src={sns_image}></a>')
-        prompt_link = f'<a href="{gradio_path}{promptfile}_prompt.txt">Prompt</a>'
+        sns_link= f'<a href="https://x.com/intent/post?text=100日でアイアンマンになる物語%20アイアンリーマン%20シンジの場合%20残り96日%20https%3A%2F%2Fktrips.net%2F100-days-to-ironman%2F&url={gradio_path}{imagefile}&hashtags=100日でアイアンマンになる物語,100Days2Ironman,ironman&openExternalBrowser=1">Post SNS</a>' #<img src={sns_image}></a>')
+        prompt_link = f'<a href="{gradio_path}{promptfile}">Prompt</a>'
         output_link = sns_link + ' | ' + prompt_link
         print(output_link)
 
@@ -788,13 +829,13 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             with gr.Tab("Generate"):
-                with gr.Row():
+                #with gr.Row():
                     img_up = gr.Image(label="Chara Photo", sources="upload",
                         type="pil", mirror_webcam=False, value=charas[default_chara][1], width=250,height=250)
                                         
                     chara_name= gr.Dropdown(choices=charas, label="Chara", value=default_chara, interactive=True, scale=1) #Textbox(label="Chara Name", interactive=True)
                     chara_name.change(chara_picture, chara_name, img_up)
-                    page_plot = gr.Textbox(label="Title/Plot", interactive=True, scale=2)
+                    page_plot = gr.Textbox(label="Plot", interactive=True, scale=2)
 
                     #prompt_out= gr.Textbox(label="Prompt", max_lines=100, placeholder="Upload photo & plot, and edit results", interactive=True, scale=2)
                     output_image= gr.Image(label="AniMaker Result")
@@ -803,7 +844,21 @@ with gr.Blocks() as demo:
                         inputs=[img_up,chara_name,page_plot], outputs=[output_image,output_link], #live=True, 
                         flagging_mode="never", clear_btn=None)
 
-            with gr.Tab("Hybrid"):
+            with gr.Tab("New"):
+                #with gr.Row():
+                    new_up = gr.Image(label="New Photo", sources="upload",
+                        type="pil", mirror_webcam=False, width=250,height=250,) # value=charas[default_chara][1]0)
+                                        
+                    new_name  = gr.Textbox(label="New member name", value="New", interactive=True, scale=1)
+                    page_title= gr.Textbox(label="Title", interactive=True, scale=2)
+
+                    output_image= gr.Image(label="AniMaker Result")
+                    output_link = gr.Markdown()
+                    gr.Interface(fn=plot_image_generate, #camera_nodetect, #camera_detect,
+                        inputs=[new_up,new_name,page_title], outputs=[output_image,output_link], #live=True, 
+                        flagging_mode="never", clear_btn=None)
+                    
+            with gr.Tab("Plot"):
                 with gr.Row():
                     img_up = gr.Image(label="Chara Photo", sources="upload",
                         type="pil", mirror_webcam=False, value=charas[default_chara][1], width=250,height=250)
@@ -872,8 +927,9 @@ with gr.Blocks() as demo:
                 page_style= gr.Dropdown(choices=page_styles,label="Anime Style", value=default_style, interactive=True)
                 page_size = gr.Dropdown(choices=page_sizes,label="Canvas size",  value=default_size, interactive=True)
                 page_story= gr.Dropdown(choices=page_storys,label="Generate/Manual", value=default_story, interactive=True)
-                image_quality = gr.Dropdown(choices=image_qualities,label="Image quality", value=default_quality, interactive=True)
-                generate_page = gr.Dropdown(choices=generate_pages,label="Generate page/s",value=default_page, interactive=True)
+                image_quality= gr.Dropdown(choices=image_qualities,label="Image quality", value=default_quality, interactive=True)
+                generate_page= gr.Dropdown(choices=generate_pages,label="Generate page/s",value=default_page, interactive=True)
+                page_panel  = gr.Dropdown(choices=page_panels,label="# of panels in a page",value=default_panel, interactive=True)
 
                 llm_model= gr.Dropdown(choices=llms,label="LLM", interactive=True, value=default_model)
                 llm_key  = gr.Textbox(label="LLM API Key", interactive=True,) #value=default_key,placeholder="Paste your LLM API key here",)
