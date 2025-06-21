@@ -42,5 +42,21 @@ $ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 $ docker push asia-northeast1-docker.pkg.dev/[your_project]/animaker-repo/animaker:v1
 $ gcloud run deploy animaker --image=asia-northeast1-docker.pkg.dev/[your_project]/animaker-repo/animaker:v1 --memory=1Gi --port=8080 --allow-unauthenticated --platform=managed --region=asia-northeast1
 ```
-
 Now you can access https://animaker-xxxx.asia-northeast1.run.app or AniMaker.Ktrips.net! Enjoy!
+
+## How to use AniMaker:
+### 0. LLMとAPI Keyをセット
+### New Story:
+1. 写真をアップして
+2. 適当なタイトル(例: シンガポールで大冒険)を入れて
+3. アニメ風、アメコミ風などを選べば
+4. アニメの表紙と4ページのマンガがAniMaker!
+### Chara Plot:
+0. キャラを事前登録
+1. キャラを選んで
+2. あらすじを入れると
+3. 4ページ分のプロンプト生成
+4. それを微修正して、5コマのマンガがAniMaker!
+#### AI Usages:
+- https://platform.openai.com/usage
+- https://gemini.google.com/usage
