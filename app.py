@@ -554,7 +554,7 @@ with gr.Blocks() as demo:
                 4. それを微修正して、5コマのマンガがAniMaker!
                 ### AI Usages:
                 - https://platform.openai.com/usage
-                - https://gemini.google.com/usage
+                - https://console.cloud.google.com/billing
                 """)
     with gr.Row():
         with gr.Column():
@@ -568,7 +568,7 @@ with gr.Blocks() as demo:
 
                 new_btn    = gr.Button("4. AniMaker!")
                 #with gr.Accordion(open=False):
-                output_image = gr.Image(label="AniMaker Image")
+                output_image = gr.Image(label="4. AniMaker Image")
                 output_link  = gr.Markdown()
                 use_plot = gr.Markdown(label="Generated plot and image for AniMaker")
                 new_btn.click(fn=plot_image_generate, inputs=[LLM, new_up,cover_style,page_title, cover_pages], 
@@ -602,11 +602,12 @@ with gr.Blocks() as demo:
                 prompt_out= gr.Textbox(label="3. Prompt Out", max_lines=500, 
                     placeholder="Upload photo & plot, then edit results", interactive=True, scale=2)
                 plot_btn.click(fn=plot_generate, inputs=[LLM, chara_name,page_plot], outputs=[page_plot, prompt_out], api_name="plot_generate")
-                    
+
+                cover_pages= gr.Dropdown(choices=[0,1,2,3,4], label="4. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)    
                 anime_btn = gr.Button("4. AniMaker!")
-                output_image = gr.Image(label="AniMaker Image")
+                output_image = gr.Image(label="4. AniMaker Image")
                 output_link = gr.Markdown()
-                anime_btn.click(fn=image_generate, inputs=[LLM, prompt_out], 
+                anime_btn.click(fn=image_generate, inputs=[LLM, prompt_out, cover_pages], 
                     outputs=[use_plot,output_image,output_link], api_name="animaker")
             """
             with gr.Tab("Camera"):
@@ -718,7 +719,6 @@ def generate_image(LLM,apikey, in_prompt,source_image):
     #source_image = open(img_up_path, "rb")
     #image_base64 = encode_image(source_image) # open(img_up, "rb")
     #img = Image.open(filename)
-    
     with open(img_up_path, 'rb') as f:
         data = f.read()
     #source_image = Image.open(BytesIO(data))
@@ -733,23 +733,20 @@ def generate_image(LLM,apikey, in_prompt,source_image):
         client  = genai.Client(api_key=apikey)
         #gemini_client = gemini.GenerativeModel(llm_model, 
             #generation_config={"temperature":temp_config, "max_output_tokens":max_config})
-        response = client.models.generate_content(model=llm_model,
+        response = client.models.generate_content(model="gemini-2.0-flash-preview-image-generation",
             contents=[in_prompt, image_base64],
-            config=types.GenerateContentConfig(response_modalities=['Text', 'Image']))
-                    #generation_config=ai_gen_config)
-                    #temperature=temp_config,
-                    #top_p=0.95,
-                    #top_k=40,
-                    #max_output_tokens=max_config)
+            config=types.GenerateContentConfig(response_modalities=['Text', 'Image'],
+                temperature=ai_gen_config["temperature"],
+                top_p=ai_gen_config["top_p"],
+                top_k=ai_gen_config["top_k"],
+                max_output_tokens=ai_gen_config["max_output_tokens"])
+        )
         for part in response.candidates[0].content.parts:
             if part.text is not None:
                 with open(promptfile, "a", encoding="utf-8") as f:
                     f.write(part.text + "\n\n")
                 print(part.text)
             elif part.inline_data is not None:
-                #image_count += 1
-                #promptfile= results_path+filename+'_prompt'+str(image_count)+'.txt'
-                #imagefile = results_path+filename+'_image'+str(image_count)+'.jpg'
                 with open(promptfile, 'a', encoding='utf-8') as f:
                     f.write(in_prompt)
                 image = Image.open(BytesIO(part.inline_data.data))
@@ -786,6 +783,6 @@ def generate_image(LLM,apikey, in_prompt,source_image):
 
 parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
-parser.add_argument("--port", type=int, default=8180, help="Port to listen on")
+parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
 demo.launch(server_name=args.ip,server_port=args.port, auth=("usr","pswd1"))

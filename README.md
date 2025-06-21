@@ -59,4 +59,4 @@ Now you can access https://animaker-xxxx.asia-northeast1.run.app or AniMaker.Ktr
 4. それを微修正して、5コマのマンガがAniMaker!
 #### AI Usages:
 - https://platform.openai.com/usage
-- https://gemini.google.com/usage
+- https://console.cloud.google.com/billing
