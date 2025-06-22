@@ -38,6 +38,7 @@ Temporary Items
 
 ## sec
 .env
+config.py
 
 ## Archive
 Arc/
@@ -48,3 +49,4 @@ results/
 test*
 agent_history*
 img*
+*.sh

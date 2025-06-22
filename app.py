@@ -56,15 +56,16 @@ page_panels    = [1,2,3,4,5]
 
 colors = ["指定なし","黒","茶","赤","青","黄","緑","紫","ピンク","オレンジ","白"]
 
+
+import vertexai
+from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
+
 llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
         "GOOGLE_API": "gemini-2.0-flash-exp", #"gemini-2.0-flash-preview-image-generation",
         "ANTHOLOPIC": "claude-3-5-sonnet-latest"}
-options = {"""
-    temperature=0,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2
-"""}
+genai_config = {"temperature":0.9, 
+                 "top_p":0.95, "top_k":40, #0.95, 
+                 "max_output_tokens": 4098} #8192, 2048, #256,
 
 """
 cover_anime = {"cover":[1],
@@ -211,7 +212,7 @@ def add_chara(LLM, chara_up,chara_name,chara_desc,chara_color):
         ロゴや文字などは架空のものに変更して下さい。
         背景は海沿いの青空にして下さい。"""
     
-    charafile = generate_image(LLM,apikey, anime_prompt,source_image)
+    charafile = genai_image(LLM,apikey, anime_prompt,source_image)
     return charafile
 
 """
@@ -319,7 +320,7 @@ def plot_generate(LLM, chara_name,page_plot, title_plot="plot", cover_pages=1):
     charas_prompt= ""
     if title_plot in ["title","cover"]:
         system_content = "このシステムは、テキストが提供された時に、それをタイトルとした物語のあらすじを300字程度で、起承転結を付けて生成します。"
-        use_plot = generate_text(LLM,apikey, system_content, page_plot)
+        use_plot = genai_text(LLM,apikey, system_content, page_plot)
     else:
         use_plot = page_plot
         for chara in charas:
@@ -366,10 +367,11 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 プロットに記述したランドマークや商品、人物はなるべく正確に写実的に表現して絵柄に入れて下さい。
 各Panelのフォーマットはこのフォーマットを元に、1ページに{page_panels[4]}つのPanelを作って下さい。
 
+== Prompt Format ==
 ■ ■ テキストネーム ■ ■
-# プロット:
-{use_plot}
 ■ ■ [# Text Name Title] ■ ■
+# プロット: {use_plot}
+
 # Page n : [# ページタイトル]
 ## Panels layout:
 ### Panel m
@@ -388,14 +390,15 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
         generated_prompt = direction + f""" Please generate Manga Cover page.
             漫画のカバーを{cover_style}のように作って下さい。
             {page_plot}をタイトルとして、画像内の上側に大きく配置。
-            著者名として、「アニメイカー by {llms[LLM][:6].upper()}」を題名の下に表示。
+            著者名として、「作画: アニメイカー」を題名の下に表示。
             写真を大きく中心に、印象的に配置。
             全体感はプロット{use_plot}のテイストを入れて描写。
             """
+        # by {llms[LLM][:6].upper()}
     else:
         system_content  = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
         direction = f"\n ## Please generate one page image exactly following the page and panel layouts for [# Page {cover_pages}] with your best effort. \n"
-        generated_prompt = direction + generate_text(LLM,apikey, system_content, plot_prompt)
+        generated_prompt = direction + genai_text(LLM,apikey, system_content, plot_prompt)
 
     anime_prompt = common_prompt + generated_prompt
     
@@ -410,15 +413,23 @@ async def image_generate(LLM, prompt_out):
 
     print(f"== Main Generation ==\n Starting Anime image generation by {LLM}!\n")
 
-    img_up.save(img_up_path)
+    #img_up.save(img_up_path)
     #image_base64 = encode_image(img_up)
 
-    #imagefile = main(prompt_out)
-
     source_image = open(img_up_path, "rb")
-    imagefile, output_link = generate_image(LLM,apikey, prompt_out,source_image)
 
-    return imagefile, output_link
+    imagefile,promptfile = genai_image(LLM,apikey, prompt_out,source_image)
+
+    sns_link= f"""<a href="https://x.com/intent/post?text={story_name}%20
+        アイアンリーマン%20シンジの場合%20残り96日%20
+        https%3A%2F%2Fktrips.net%2F100-days-to-ironman%2F
+        &url={gradio_path}{imagefile}
+        &hashtags={story_name},100Days2Ironman,ironman&openExternalBrowser=1">Post SNS</a>
+        """
+    prompt_link = f'<a href="{gradio_path}{promptfile}">Prompt</a>'
+    output_link = sns_link + ' | ' + prompt_link
+
+    return use_plot, imagefile, output_link
 
 
 async def plot_image_generate(LLM, img_up,chara_name,page_plot, cover_pages=1):
@@ -452,7 +463,7 @@ async def plot_image_generate(LLM, img_up,chara_name,page_plot, cover_pages=1):
     #imagefile = results_path+filename+'_image.jpg'
     #promptfile = results_path+filename+'_prompt.txt'
 
-    imagefile,promptfile = generate_image(LLM,apikey, prompt_out,source_image)
+    imagefile,promptfile = genai_image(LLM,apikey, prompt_out,source_image)
 
     sns_link= f"""<a href="https://x.com/intent/post?text={story_name}%20
         アイアンリーマン%20シンジの場合%20残り96日%20
@@ -490,8 +501,8 @@ def camera_detect(image,LLM):
     image_base64 = encode_image(image)
     if LLM == "GOOGLE_API":
         gemini.configure(api_key=apikey)
-        gemini_client = gemini.GenerativeModel(llms[LLM],generation_config=ai_gen_config)
-        response = gemini_client.generate_content([image_base64, camera_prompt])
+        gemini_client = gemini.GenerativeModel(llms[LLM]) #,generation_config=gemini_config)
+        response = gemini_client.genai_content([image_base64, camera_prompt])
         result = response.text
         print(result)
         return result
@@ -531,7 +542,7 @@ def chara_picture(chara_name):
 def llm_change(LLM):
     return llms[LLM]
 
-with gr.Blocks() as demo:
+with gr.Blocks() as animaker:
     with gr.Row():
         with gr.Accordion(label="AniMaker!", open=False):
             LLM = gr.Dropdown(choices=llms,label="0. LLM", interactive=True, value=DEF_LLM)
@@ -573,6 +584,7 @@ with gr.Blocks() as demo:
                 use_plot = gr.Markdown(label="Generated plot and image for AniMaker")
                 new_btn.click(fn=plot_image_generate, inputs=[LLM, new_up,cover_style,page_title, cover_pages], 
                     outputs=[use_plot,output_image,output_link], api_name="new_generate")
+                
             """
             with gr.Tab("PlotMaker"):
                 #with gr.Row():
@@ -603,11 +615,12 @@ with gr.Blocks() as demo:
                     placeholder="Upload photo & plot, then edit results", interactive=True, scale=2)
                 plot_btn.click(fn=plot_generate, inputs=[LLM, chara_name,page_plot], outputs=[page_plot, prompt_out], api_name="plot_generate")
 
-                cover_pages= gr.Dropdown(choices=[0,1,2,3,4], label="4. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)    
+                #cover_pages= gr.Dropdown(choices=[0,1,2,3,4], label="4. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)    
                 anime_btn = gr.Button("4. AniMaker!")
                 output_image = gr.Image(label="4. AniMaker Image")
                 output_link = gr.Markdown()
-                anime_btn.click(fn=image_generate, inputs=[LLM, prompt_out, cover_pages], 
+                use_plot = gr.Markdown(label="Generated plot and image for AniMaker")
+                anime_btn.click(fn=image_generate, inputs=[LLM, prompt_out], #, cover_pages], 
                     outputs=[use_plot,output_image,output_link], api_name="animaker")
             """
             with gr.Tab("Camera"):
@@ -669,19 +682,17 @@ filename   = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
 promptfile = results_path+filename+'_prompt.txt'
 """
 
-ai_gen_config = {"temperature":0.9, 
-                 "top_p":0.95, "top_k":40, 
-                 "max_output_tokens": 4098} #8192, 2048, #256,
-
-def generate_text(LLM, apikey, system_content, in_prompt):
+def genai_text(LLM, apikey, system_content, in_prompt):
     if apikey is None:
         apikey = os.getenv(LLM+"_KEY")
     llm_model= llms[LLM]
+    #print(LLM)
 
     if LLM == "GOOGLE_API":
         gemini.configure(api_key=apikey)
-        gemini_client = gemini.GenerativeModel(llm_model, 
-            generation_config=ai_gen_config) #{"temperature":temp_config, "max_output_tokens":max_config})
+        gemini_client = gemini.GenerativeModel(llm_model)
+            #GenerationConfig(temperature=genai_config["temperature"], max_output_tokens=genai_config["max_output_tokens"]))
+            #generation_config=gemini_config)
         response= gemini_client.generate_content(in_prompt) #[image_base64, plot_prompt])
         result  = response.text
         
@@ -702,16 +713,16 @@ def generate_text(LLM, apikey, system_content, in_prompt):
                     ]
                 },
             ],
-            #generation_config = ai_gen_config
-            #temperature = temp_config,
-            #max_tokens = max_config,
+            #generation_config = genai_config
+            temperature= genai_config["temperature"],
+            max_tokens = genai_config["max_output_tokens"]
         )
         result = response.choices[0].message.content
 
     #print("Generated Plot: "+result)
     return result
     
-def generate_image(LLM,apikey, in_prompt,source_image):
+def genai_image(LLM,apikey, in_prompt,source_image):
     if apikey is None:
         apikey = os.getenv(LLM+"_KEY")
     llm_model= llms[LLM]
@@ -725,9 +736,6 @@ def generate_image(LLM,apikey, in_prompt,source_image):
     image_base64 = encode_image(Image.open(BytesIO(data)))
 
     filename = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-    promptfile= results_path+filename+'_prompt.txt'
-    imagefile = results_path+filename+'_image.jpg'
-
     if LLM == "GOOGLE_API":
         #gemini.configure(api_key=apikey)
         client  = genai.Client(api_key=apikey)
@@ -736,22 +744,26 @@ def generate_image(LLM,apikey, in_prompt,source_image):
         response = client.models.generate_content(model="gemini-2.0-flash-preview-image-generation",
             contents=[in_prompt, image_base64],
             config=types.GenerateContentConfig(response_modalities=['Text', 'Image'],
-                temperature=ai_gen_config["temperature"],
-                top_p=ai_gen_config["top_p"],
-                top_k=ai_gen_config["top_k"],
-                max_output_tokens=ai_gen_config["max_output_tokens"])
+                temperature=genai_config["temperature"],
+                top_p=genai_config["top_p"],
+                top_k=genai_config["top_k"],
+                max_output_tokens=genai_config["max_output_tokens"])
         )
+        #imgnum = 0
         for part in response.candidates[0].content.parts:
             if part.text is not None:
                 with open(promptfile, "a", encoding="utf-8") as f:
                     f.write(part.text + "\n\n")
                 print(part.text)
             elif part.inline_data is not None:
-                with open(promptfile, 'a', encoding='utf-8') as f:
-                    f.write(in_prompt)
+                #imgnum += 1
+                imagefile = f"{results_path}{filename}_image.jpg" #{imgnum:03d}.jpg"
+                promptfile= f"{results_path}{filename}_prompt.txt" #{imgnum:03d}.txt"
                 image = Image.open(BytesIO(part.inline_data.data))
                 image.save(imagefile)
-
+                #fp.write(f"![image](./example-image-{i+1}.png)")
+                with open(promptfile, 'a', encoding='utf-8') as f:
+                    f.write(in_prompt)
             print("ImageFile saved: " + imagefile)
         
     elif LLM == "OPENAI_API":
@@ -766,9 +778,8 @@ def generate_image(LLM,apikey, in_prompt,source_image):
             #n = generate_pages
         )
         image_response = response.data[0].b64_json
-        #promptfile= results_path+filename+'_prompt.txt'
-        #imagefile = results_path+filename+'_image.jpg'
-
+        promptfile= results_path+filename+'_prompt.txt'
+        imagefile = results_path+filename+'_image.jpg'
         with open(promptfile, 'a', encoding='utf-8') as f:
             f.write(in_prompt)
         with open(imagefile, "wb") as f:
@@ -785,4 +796,4 @@ parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
 parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
-demo.launch(server_name=args.ip,server_port=args.port, auth=("usr","pswd1"))
+animaker.launch(server_name=args.ip,server_port=args.port, auth=("usr","pswd1"))
