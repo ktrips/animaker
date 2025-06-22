@@ -56,7 +56,6 @@ page_panels    = [1,2,3,4,5]
 
 colors = ["指定なし","黒","茶","赤","青","黄","緑","紫","ピンク","オレンジ","白"]
 
-
 import vertexai
 from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
 
@@ -83,7 +82,7 @@ cover_pages_choices = {"Cover": 0,
 }
 """
 
-DEF_LLM = "GOOGLE_API" #"OPENAI_API" #
+DEF_LLM = "OPENAI_API" #"GOOGLE_API" # #"GOOGLE_API"
 default_key  = "api_key ..."
 default_style= "Jp 90s"
 default_story= "Generate"
@@ -362,14 +361,16 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 {charas_prompt}
 各登場人物は、そのシーンに合った服装、表情をしています。
 以下の[# プロット]から、n=1からn={generate_pages[3]}までの、{generate_pages[3]}ページのプロンプトを生成して下さい。1ページには、m=1からm={page_panels[4]}までの{page_panels[4]}つのPanelを作り、各Panel毎に以下のフォーマットに従って、1ページに{page_panels[4]}つのpanelを記述したプロンプトを作成してください。
-プロット全体を通した[# Text Name Title] をつけて下さい。
+プロット全体を通した[# テキストネームタイトル] をつけて下さい。
 各ページ毎の[# ページタイトル]もつけて下さい。
 プロットに記述したランドマークや商品、人物はなるべく正確に写実的に表現して絵柄に入れて下さい。
 各Panelのフォーマットはこのフォーマットを元に、1ページに{page_panels[4]}つのPanelを作って下さい。
 
 == Prompt Format ==
+
 ■ ■ テキストネーム ■ ■
-■ ■ [# Text Name Title] ■ ■
+■ ■ [# テキストネームタイトル: ] ■ ■
+
 # プロット: {use_plot}
 
 # Page n : [# ページタイトル]
@@ -743,11 +744,11 @@ def genai_image(LLM,apikey, in_prompt,source_image):
             #generation_config={"temperature":temp_config, "max_output_tokens":max_config})
         response = client.models.generate_content(model="gemini-2.0-flash-preview-image-generation",
             contents=[in_prompt, image_base64],
-            config=types.GenerateContentConfig(response_modalities=['Text', 'Image'],
-                temperature=genai_config["temperature"],
-                top_p=genai_config["top_p"],
-                top_k=genai_config["top_k"],
-                max_output_tokens=genai_config["max_output_tokens"])
+            config=types.GenerateContentConfig(response_modalities=['Text', 'Image'])
+                #temperature=genai_config["temperature"],
+                #top_p=genai_config["top_p"],
+                #top_k=genai_config["top_k"],
+                #max_output_tokens=genai_config["max_output_tokens"])
         )
         #imgnum = 0
         for part in response.candidates[0].content.parts:
