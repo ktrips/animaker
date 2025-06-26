@@ -83,7 +83,7 @@ cover_pages_choices = {"Cover": 0,
 """
 
 DEF_LLM = "OPENAI_API" #"GOOGLE_API" # #"GOOGLE_API"
-default_key  = "api_key ..."
+default_key  = ""
 default_style= "Jp 90s"
 default_story= "Generate"
 default_size = "1024x1536" #"1536x1024" #"1024x1024"
@@ -91,7 +91,6 @@ default_quality= "high"
 default_page   = 1
 default_panel  = 5
 default_color  = "指定なし"
-
 
 default_steps= 10
 default_cat  = "Book"
@@ -195,9 +194,9 @@ async def save_data(chara_name: str, image_data: str):
         json.dump(output_data, f, ensure_ascii=False, indent=4)
     print(f"\nデータを {filename} に保存しました")
 
-def add_chara(LLM, chara_up,chara_name,chara_desc,chara_color):
+def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
     print("== Chara Generation ==\n Starting {chara_name} image generation!\n")
-    apikey = os.getenv(LLM+"_KEY")
+    #apikey = os.getenv(LLM+"_KEY")
 
     chara_up.save(chara_path)
     source_image = open(chara_path+chara_name+".jpg", "rb")
@@ -211,7 +210,7 @@ def add_chara(LLM, chara_up,chara_name,chara_desc,chara_color):
         ロゴや文字などは架空のものに変更して下さい。
         背景は海沿いの青空にして下さい。"""
     
-    charafile = genai_image(LLM,apikey, anime_prompt,source_image)
+    charafile = genai_image(LLM,llm_key, anime_prompt,source_image)
     return charafile
 
 """
@@ -308,18 +307,16 @@ async def main(LLM, prompt_out): #img_up, llm_model, prompt_out):
     return imagefile, output_link
 """
 
-def plot_generate(LLM, chara_name,page_plot, title_plot="plot", cover_pages=1):
+def plot_generate(LLM,llm_key, chara_name,page_plot, title_plot="plot", cover_pages=1):
     print(f"== Prompt Generation ==\n Starting {title_plot} for {cover_pages} creation by {LLM} for {chara_name}!\n")
-    #if llm_key:
-    #    apikey = llm_key
-    #else:
-    apikey = os.getenv(LLM+"_KEY")
-    openai_client = OpenAI(api_key=apikey)
+    #apikey = os.getenv(LLM+"_KEY")
+    #openai_client = OpenAI(api_key=apikey)
+    #apikey = llm_key
 
     charas_prompt= ""
     if title_plot in ["title","cover"]:
         system_content = "このシステムは、テキストが提供された時に、それをタイトルとした物語のあらすじを300字程度で、起承転結を付けて生成します。"
-        use_plot = genai_text(LLM,apikey, system_content, page_plot)
+        use_plot = genai_text(LLM,llm_key, system_content, page_plot)
     else:
         use_plot = page_plot
         for chara in charas:
@@ -399,18 +396,15 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
     else:
         system_content  = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
         direction = f"\n ## Please generate one page image exactly following the page and panel layouts for [# Page {cover_pages}] with your best effort. \n"
-        generated_prompt = direction + genai_text(LLM,apikey, system_content, plot_prompt)
+        generated_prompt = direction + genai_text(LLM,llm_key, system_content, plot_prompt)
 
     anime_prompt = common_prompt + generated_prompt
     
     return use_plot, anime_prompt
 
-async def image_generate(LLM, prompt_out):
-    #llm_model=default_model
-    #if llm_key:
-    #    apikey = llm_key
-    #else:
-    apikey = os.getenv(LLM+"_KEY")
+async def image_generate(LLM,llm_key, prompt_out):
+    #apikey = os.getenv(LLM+"_KEY")
+    #apikey = llm_key
 
     print(f"== Main Generation ==\n Starting Anime image generation by {LLM}!\n")
 
@@ -419,7 +413,7 @@ async def image_generate(LLM, prompt_out):
 
     source_image = open(img_up_path, "rb")
 
-    imagefile,promptfile = genai_image(LLM,apikey, prompt_out,source_image)
+    imagefile,promptfile = genai_image(LLM,llm_key, prompt_out,source_image)
 
     sns_link= f"""<a href="https://x.com/intent/post?text={story_name}%20
         アイアンリーマン%20シンジの場合%20残り96日%20
@@ -433,12 +427,10 @@ async def image_generate(LLM, prompt_out):
     return use_plot, imagefile, output_link
 
 
-async def plot_image_generate(LLM, img_up,chara_name,page_plot, cover_pages=1):
+async def plot_image_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1):
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM} for {chara_name}!\n")
-    #if llm_key:
-    #    apikey = llm_key
-    #else:
-    apikey = os.getenv(LLM+"_KEY")
+    #apikey = os.getenv(LLM+"_KEY")
+    #apikey = llm_key
     
     if cover_pages == 0:
         use_plot, prompt_out = plot_generate(LLM, chara_name,page_plot, "cover", cover_pages)
@@ -464,7 +456,7 @@ async def plot_image_generate(LLM, img_up,chara_name,page_plot, cover_pages=1):
     #imagefile = results_path+filename+'_image.jpg'
     #promptfile = results_path+filename+'_prompt.txt'
 
-    imagefile,promptfile = genai_image(LLM,apikey, prompt_out,source_image)
+    imagefile,promptfile = genai_image(LLM,llm_key, prompt_out,source_image)
 
     sns_link= f"""<a href="https://x.com/intent/post?text={story_name}%20
         アイアンリーマン%20シンジの場合%20残り96日%20
@@ -489,11 +481,8 @@ def encode_image(image):
     return base64_image
 
 def camera_detect(image,LLM):
-    #llm_model=default_model
-    #if llm_key:
-    #    apikey = llm_key
-    #else:
-    apikey = os.getenv(LLM+"_KEY")
+    #apikey = os.getenv(LLM+"_KEY")
+    apikey = llm_key
 
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
 
@@ -549,7 +538,8 @@ with gr.Blocks() as animaker:
             LLM = gr.Dropdown(choices=llms,label="0. LLM", interactive=True, value=DEF_LLM)
             llm_model = gr.Textbox(label="0. LLM Model", value=llms[DEF_LLM], interactive=True)
             LLM.change(llm_change, LLM, llm_model)
-            llm_key = gr.Textbox(label="0. LLM API Key", interactive=True, value=default_key) #,placeholder="Paste your LLM API key here",)
+            llm_key = gr.Textbox(label="0. LLM API Key", interactive=True, value=default_key, placeholder="Paste your LLM API key here", type="password")
+            print(llm_key)
             animaker_usage = gr.Markdown(f"""
                 # How to use AniMaker:
                 ## 0. LLMとAPI Keyをセット
@@ -576,14 +566,14 @@ with gr.Blocks() as animaker:
                 #new_name  = gr.Textbox(label="New member name", value="New", interactive=True, scale=1)
                 page_title = gr.Textbox(label="2. Title", placeholder="Just put title (e.g. Singapore trip...) for anime", interactive=True, scale=2)
                 cover_pages= gr.Dropdown(choices=[0,1,2,3,4], label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
-                cover_style= gr.Dropdown(choices=page_styles,label="3. Cover Image Style", value=default_style, interactive=True)
+                cover_style= gr.Dropdown(choices=page_styles,label="4. Cover Image Style", value=default_style, interactive=True)
 
                 new_btn    = gr.Button("4. AniMaker!")
                 #with gr.Accordion(open=False):
                 output_image = gr.Image(label="4. AniMaker Image")
                 output_link  = gr.Markdown()
                 use_plot = gr.Markdown(label="Generated plot and image for AniMaker")
-                new_btn.click(fn=plot_image_generate, inputs=[LLM, new_up,cover_style,page_title, cover_pages], 
+                new_btn.click(fn=plot_image_generate, inputs=[LLM,llm_key, new_up,cover_style,page_title, cover_pages], 
                     outputs=[use_plot,output_image,output_link], api_name="new_generate")
                 
             """
@@ -614,14 +604,14 @@ with gr.Blocks() as animaker:
                 plot_btn = gr.Button("3. Generate Prompt")
                 prompt_out= gr.Textbox(label="3. Prompt Out", max_lines=500, 
                     placeholder="Upload photo & plot, then edit results", interactive=True, scale=2)
-                plot_btn.click(fn=plot_generate, inputs=[LLM, chara_name,page_plot], outputs=[page_plot, prompt_out], api_name="plot_generate")
+                plot_btn.click(fn=plot_generate, inputs=[LLM,llm_key, chara_name,page_plot], outputs=[page_plot, prompt_out], api_name="plot_generate")
 
                 #cover_pages= gr.Dropdown(choices=[0,1,2,3,4], label="4. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)    
                 anime_btn = gr.Button("4. AniMaker!")
                 output_image = gr.Image(label="4. AniMaker Image")
                 output_link = gr.Markdown()
                 use_plot = gr.Markdown(label="Generated plot and image for AniMaker")
-                anime_btn.click(fn=image_generate, inputs=[LLM, prompt_out], #, cover_pages], 
+                anime_btn.click(fn=image_generate, inputs=[LLM,llm_key, prompt_out], #, cover_pages], 
                     outputs=[use_plot,output_image,output_link], api_name="animaker")
             """
             with gr.Tab("Camera"):
@@ -654,7 +644,7 @@ with gr.Blocks() as animaker:
                     chara_up = gr.Image(label="Person's photo", sources="upload",
                         type="pil", mirror_webcam=False, width=200,height=200)
                     chara_btn = gr.Button("Add Anime Chara")
-                    chara_btn.click(fn=add_chara, inputs=[LLM, chara_up,chara_name,chara_desc,chara_color],
+                    chara_btn.click(fn=add_chara, inputs=[LLM,llm_key, chara_up,chara_name,chara_desc,chara_color],
                         outputs=[gr.Image(label="Generated Anime Chara",width=200,height=200)], api_name="addchara")
         """
         [gr.Image(
@@ -683,11 +673,10 @@ filename   = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
 promptfile = results_path+filename+'_prompt.txt'
 """
 
-def genai_text(LLM, apikey, system_content, in_prompt):
+def genai_text(LLM,apikey, system_content, in_prompt):
     if apikey is None:
         apikey = os.getenv(LLM+"_KEY")
     llm_model= llms[LLM]
-    #print(LLM)
 
     if LLM == "GOOGLE_API":
         gemini.configure(api_key=apikey)
