@@ -574,8 +574,7 @@ promptfile = results_path+filename+'_prompt.txt'
 """
 
 def genai_text(LLM,apikey, system_content, in_prompt):
-    if apikey == "":
-        apikey = os.getenv(LLM+"_KEY")
+    apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
     llm_model= llms[LLM]
 
     if LLM == "GOOGLE_API":
@@ -613,8 +612,7 @@ def genai_text(LLM,apikey, system_content, in_prompt):
     return result
     
 def genai_image(LLM,apikey, in_prompt,source_image):
-    if apikey == "":
-        apikey = os.getenv(LLM+"_KEY")
+    apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
     llm_model= llms[LLM]
     
     #source_image = open(img_up_path, "rb")
