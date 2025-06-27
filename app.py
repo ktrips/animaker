@@ -82,7 +82,7 @@ cover_pages_choices = {"Cover": 0,
 }
 """
 
-DEF_LLM = "OPENAI_API" #"GOOGLE_API" # #"GOOGLE_API"
+DEF_LLM = "GOOGLE_API" # #"GOOGLE_API"
 default_key  = ""
 default_style= "Jp 90s"
 default_story= "Generate"
@@ -213,105 +213,9 @@ def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
     charafile = genai_image(LLM,llm_key, anime_prompt,source_image)
     return charafile
 
-"""
-async def main(LLM, prompt_out): #img_up, llm_model, prompt_out):
-    #llm_model=default_model
-    print(f"== Main Generation ==\n Starting Anime image generation by {LLM}!\n")
-    #print(llm_model)
-    #print(prompt_out)
-    #if llm_key:
-    #    apikey = llm_key
-    #else:
-    apikey = os.getenv(LLM+"_KEY")
-    #source_image = open(img_up_path, "rb")
-    #image_base64 = encode_image(source_image) # open(img_up, "rb")
-    #img = Image.open(filename)
-    with open(img_up_path, 'rb') as f:
-        data = f.read()
-    source_image = Image.open(BytesIO(data))
-
-    filename   = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-    #imagefile = results_path+filename+'_image.jpg'
-    promptfile = results_path+filename+'_prompt.txt'
-
-    if LLM == "GOOGLE_API":
-        generate_model = llms[LLM]
-        #gemini.configure(api_key=apikey)
-        generation_config = {
-            "temperature": 0.1,
-            "top_p": 1,
-            "top_k": 1,
-            "max_output_tokens": 4098}
-        #gemini_client = gemini.GenerativeModel(generate_model, generation_config=generation_config)
-        client  = genai.Client(api_key=apikey)
-        #response = gemini_client.generate_content([image_base64, prompt_out])
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-preview-image-generation", #models/gemini-2.5-pro-preview-05-06", # gemini-2.0-flash-exp",
-            contents=[prompt_out, source_image],
-            config=types.GenerateContentConfig(response_modalities=['Text', 'Image'])
-        )
-        image_count = 0
-        for part in response.candidates[0].content.parts:
-            if part.text is not None:
-                with open(results_path+filename+'_part.txt', "a", encoding="utf-8") as f:
-                    f.write(part.text + "\n\n")
-                print(part.text)
-            elif part.inline_data is not None:
-                image_count += 1
-                with open(results_path+filename+'_gemprompt'+str(image_count)+'.txt', 'a', encoding='utf-8') as f:
-                    f.write(prompt_out)
-                image = Image.open(BytesIO(part.inline_data.data))
-                #edited_image.save("edited_image.jpg")
-                imagefile = results_path+filename+'_gemimage'+str(image_count)+'.jpg'
-                image.save(imagefile)
-
-            #with open(imagefile, "wb") as f:
-                #f.write(base64.b64decode(image_response))
-
-        #result = response.text
-        #return result
-
-    elif LLM == "OPENAI_API":
-        generate_model = "gpt-image-1"
-        client = OpenAI(api_key=apikey)
-        #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
-        response = client.images.edit(
-            model  = generate_model, #llms[llm_model], #"gpt-image-1",
-            image  = source_image,
-            prompt = prompt_out,
-            quality= default_quality,
-            size   = default_size,
-            #n = generate_pages
-        )
-        image_response = response.data[0].b64_json
-        imagefile = results_path+filename+'_gptimage.jpg'
-        with open(promptfile, 'a', encoding='utf-8') as f:
-                f.write(prompt_out)
-                #json.dump(anime_prompt, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',',': '))
-        with open(imagefile, "wb") as f:
-            f.write(base64.b64decode(image_response))
-            #image = Image.open(BytesIO(part.inline_data.data))
-            #image_path = f"results/edit_{image_count}.jpg"
-            #image.save(image_path)
-
-    sns_link= f"<a href="https://x.com/intent/post?text={story_name}%20
-        アイアンリーマン%20シンジの場合%20残り96日%20
-        https%3A%2F%2Fktrips.net%2F100-days-to-ironman%2F
-        &url={gradio_path}{imagefile}
-        &hashtags={story_name},100Days2Ironman,ironman&openExternalBrowser=1">Post SNS</a>
-        "
-    prompt_link = f'<a href="{gradio_path}{promptfile}">Prompt</a>'
-    output_link = sns_link + ' | ' + prompt_link
-    print(imagefile+" created!")
-
-    return imagefile, output_link
-"""
-
 def plot_generate(LLM,llm_key, chara_name,page_plot, title_plot="plot", cover_pages=1):
     print(f"== Prompt Generation ==\n Starting {title_plot} for {cover_pages} creation by {LLM} for {chara_name}!\n")
     #apikey = os.getenv(LLM+"_KEY")
-    #openai_client = OpenAI(api_key=apikey)
-    #apikey = llm_key
 
     charas_prompt= ""
     if title_plot in ["title","cover"]:
@@ -323,7 +227,7 @@ def plot_generate(LLM,llm_key, chara_name,page_plot, title_plot="plot", cover_pa
             charas_prompt += f"""- 登場人物「{chara}」: {chara}の顔、表情、年齢、性別は、この画像 `<file:{charas[chara][1]}>` を正確に反映して下さい。
             この人物の特徴は、{charas[chara][2]}で、{charas[chara][3]}色の髪型をしています。
             """
-    print(title_plot+" = " + use_plot)
+    print(use_plot)
 
     common_prompt = f"""# Prerequisites:
 Artist Requirements: {page_style}
@@ -404,7 +308,6 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 
 async def image_generate(LLM,llm_key, prompt_out):
     #apikey = os.getenv(LLM+"_KEY")
-    #apikey = llm_key
 
     print(f"== Main Generation ==\n Starting Anime image generation by {LLM}!\n")
 
@@ -430,15 +333,14 @@ async def image_generate(LLM,llm_key, prompt_out):
 async def plot_image_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1):
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM} for {chara_name}!\n")
     #apikey = os.getenv(LLM+"_KEY")
-    #apikey = llm_key
     
     if cover_pages == 0:
-        use_plot, prompt_out = plot_generate(LLM, chara_name,page_plot, "cover", cover_pages)
+        use_plot, prompt_out = plot_generate(LLM,llm_key, chara_name,page_plot, "cover", cover_pages)
     else:
         if len(page_plot) < 50:
-            use_plot, prompt_out = plot_generate(LLM, chara_name,page_plot, "title", cover_pages)
+            use_plot, prompt_out = plot_generate(LLM,llm_key, chara_name,page_plot, "title", cover_pages)
         else:
-            use_plot, prompt_out = plot_generate(LLM, chara_name,page_plot, "plot", cover_pages)
+            use_plot, prompt_out = plot_generate(LLM,llm_key, chara_name,page_plot, "plot", cover_pages)
 
     img_up.save(img_up_path)
     #image_base64 = encode_image(img_up)
@@ -482,7 +384,6 @@ def encode_image(image):
 
 def camera_detect(image,LLM):
     #apikey = os.getenv(LLM+"_KEY")
-    apikey = llm_key
 
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
 
@@ -490,7 +391,7 @@ def camera_detect(image,LLM):
 
     image_base64 = encode_image(image)
     if LLM == "GOOGLE_API":
-        gemini.configure(api_key=apikey)
+        gemini.configure(api_key=llm_key)
         gemini_client = gemini.GenerativeModel(llms[LLM]) #,generation_config=gemini_config)
         response = gemini_client.genai_content([image_base64, camera_prompt])
         result = response.text
@@ -498,7 +399,7 @@ def camera_detect(image,LLM):
         return result
 
     elif LLM == "OPENAI_API":
-        openai_client = OpenAI(api_key=apikey)
+        openai_client = OpenAI(llm_key)
         #messages = create_message(SYSTEM_ROLE_CONTENT, PROMPT_TEMPLATE, image_base64)
         response = openai_client.chat.completions.create(
             model=llms[LLM],
@@ -539,7 +440,6 @@ with gr.Blocks() as animaker:
             llm_model = gr.Textbox(label="0. LLM Model", value=llms[DEF_LLM], interactive=True)
             LLM.change(llm_change, LLM, llm_model)
             llm_key = gr.Textbox(label="0. LLM API Key", interactive=True, value=default_key, placeholder="Paste your LLM API key here", type="password")
-            print(llm_key)
             animaker_usage = gr.Markdown(f"""
                 # How to use AniMaker:
                 ## 0. LLMとAPI Keyをセット
@@ -674,7 +574,7 @@ promptfile = results_path+filename+'_prompt.txt'
 """
 
 def genai_text(LLM,apikey, system_content, in_prompt):
-    if apikey is None:
+    if apikey == "":
         apikey = os.getenv(LLM+"_KEY")
     llm_model= llms[LLM]
 
@@ -713,7 +613,7 @@ def genai_text(LLM,apikey, system_content, in_prompt):
     return result
     
 def genai_image(LLM,apikey, in_prompt,source_image):
-    if apikey is None:
+    if apikey == "":
         apikey = os.getenv(LLM+"_KEY")
     llm_model= llms[LLM]
     
