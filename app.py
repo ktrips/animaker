@@ -306,7 +306,6 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 
 async def image_generate(LLM,llm_key, prompt_out):
     #apikey = os.getenv(LLM+"_KEY")
-
     print(f"== Main Generation ==\n Starting Anime image generation by {LLM}!\n")
 
     #img_up.save(img_up_path)
@@ -343,7 +342,6 @@ async def plot_image_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pa
     img_up.save(img_up_path)
     #image_base64 = encode_image(img_up)
 
-    #imagefile = main(prompt_out)
     print(f"== Image Generation ==\n Starting Anime image generation by {LLM}!\n")
 
     source_image = open(img_up_path, "rb")
@@ -384,17 +382,15 @@ def camera_detect(image,LLM):
     #apikey = os.getenv(LLM+"_KEY")
 
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
-
     image.save(img_up_path)
-
     image_base64 = encode_image(image)
+
     if LLM == "GOOGLE_API":
         gemini.configure(api_key=llm_key)
         gemini_client = gemini.GenerativeModel(llms[LLM]) #,generation_config=gemini_config)
         response = gemini_client.genai_content([image_base64, camera_prompt])
         result = response.text
         print(result)
-        return result
 
     elif LLM == "OPENAI_API":
         openai_client = OpenAI(llm_key)
@@ -419,10 +415,8 @@ def camera_detect(image,LLM):
         result = response.choices[0].message.content
         print(result)
 
-        return result
+    return result
 
-#img_up = gr.Image(label="Book Photo", sources="webcam",webcam_constraints=["rear"], 
-#                  type="pil", mirror_webcam=False, width=350,height=350)
 
 def flip(im):
     return np.fliplr(im)
@@ -562,15 +556,6 @@ with gr.Blocks() as animaker:
             gr.Gallery(ret_data(5), columns=6, show_label=True, show_download_button=True, show_share_button=True, allow_preview=True)
 
 
-"""
-with open(img_up_path, 'rb') as f:
-    data = f.read()
-source_image = Image.open(BytesIO(data))
-filename   = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-#imagefile = results_path+filename+'_image.jpg'
-promptfile = results_path+filename+'_prompt.txt'
-"""
-
 def genai_text(LLM,apikey, system_content, in_prompt):
     apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
     llm_model= llms[LLM]
@@ -635,7 +620,6 @@ def genai_image(LLM,apikey, in_prompt,source_image):
                 #top_k=genai_config["top_k"],
                 #max_output_tokens=genai_config["max_output_tokens"])
         )
-
         #imgnum = 0
         for part in response.candidates[0].content.parts:
             if part.text is not None:
