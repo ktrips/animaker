@@ -1,8 +1,4 @@
 import gradio as gr
-#from langchain_openai import ChatOpenAI
-#from langchain_google_genai import ChatGoogleGenerativeAI
-#from langchain_anthropic import ChatAnthropic
-#from browser_use import Agent
 import asyncio
 import os, io, requests, json
 import base64
@@ -15,7 +11,6 @@ from datetime import datetime
 from dateutil.parser import parse
 
 from gradio.themes import Citrus, Default, Glass, Monochrome, Ocean, Origin, Soft, Base
-#from src.utils.default_config_settings import default_config, load_config_from_file, save_config_to_file, save_current_config, update_ui_from_config
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -30,6 +25,9 @@ from google.genai import types
 
 page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル",
         "Arukikata": "地球の歩き方風の表紙",
+        "Ukiyoe": "浮世絵の葛飾北斎風に変換。太い輪郭線と落ち着いた和風色彩で描き、背景には浮世絵スタイルの山や波を加える。",
+        "Retro": "レトロゲーム風に変換。8bitドット絵スタイルで、カラフルかつレトロな雰囲気にする。",}
+"""
         "Ghibli": "スタジオジブリ風のアニメイラストに変換。自然豊かな背景、柔らかい線画、温かみのある色合いを表現。",
         "Pixar": "ディズニー・ピクサー風の3Dアニメスタイルに変換。大きな瞳、立体的な質感、明るい色合いで描画。",
         "Jojo": "アニメのジョジョ風（ジョジョの奇妙な冒険）に変換。太い輪郭線、激しい陰影、ポーズを強調し、カラフルな背景でジョジョの奇妙な冒険風にする。",
@@ -39,9 +37,8 @@ page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような�
         "Eva": "エヴァンゲリオン風に変換。モダンなメカニカルデザインと、ダークでシリアスな色調を追加。",
         "Kimetsu": "鬼滅の刃風に変換。和装デザインと、呼吸技のエフェクトを加えたスタイリッシュなタッチにする。",
         "Akira": "アニメのAKIRA風に変換。ネオ東京の荒廃した都市を背景に、赤いバイクに乗ったキャラクターを描く。赤や黒を基調とした色使いで、ネオンライトや未来的な都市の雰囲気を追加。",
-        "Ukiyoe": "浮世絵の葛飾北斎風に変換。太い輪郭線と落ち着いた和風色彩で描き、背景には浮世絵スタイルの山や波を加える。",
-        "Retro": "レトロゲーム風に変換。8bitドット絵スタイルで、カラフルかつレトロな雰囲気にする。",
-        "Chikawa": "ちいかわ風に変換してください。丸くて小さな体型、シンプルな線画、ほのぼのした背景で描いてください。"}
+        "Chikawa": "ちいかわ風に変換してください。丸くて小さな体型、シンプルな線画、ほのぼのした背景で描いてください。"
+"""
 
 page_sizes= {"512×768": "512 × 768 (portrait orientation)",
             "1024x1536": "1024 × 1536 (portrait orientation)",
@@ -60,29 +57,14 @@ import vertexai
 from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
 
 llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
-        "GOOGLE_API": "gemini-2.0-flash-exp", #"gemini-2.0-flash-preview-image-generation",
-        "ANTHOLOPIC": "claude-3-5-sonnet-latest"}
+        "GOOGLE_API": "gemini-2.0-flash"} #"gemini-2.0-flash-preview-image-generation",
+        #"ANTHOLOPIC": "claude-3-5-sonnet-latest"}
 genai_config = {"temperature":0.9, 
                  "top_p":0.95, "top_k":40, #0.95, 
                  "max_output_tokens": 4098} #8192, 2048, #256,
+cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4"]
 
-"""
-cover_anime = {"cover":[1],
-               "page":[1,2,3,4]}
-page_choices= []
-for k,v in cover_anime.items():
-    for v2 in v:
-        page_choices.append(k.title()+str(v2))
-
-cover_pages_choices = {"Cover": 0,
-                       "Page 1": 1,
-                       "Page 2": 2,
-                       "Page 3": 3,
-                       "Page 4": 4,
-}
-"""
-
-DEF_LLM = "GOOGLE_API" # #"GOOGLE_API"
+DEF_LLM = "GOOGLE_API"
 default_key  = ""
 default_style= "Jp 90s"
 default_story= "Generate"
@@ -128,42 +110,8 @@ panel_shots = {"Full": "Full shot",
         "Close-up": "Close-up shot"
         }
 
-#from browser_use.browser.browser import Browser, BrowserConfig
-#browser = Browser(
-#	config=BrowserConfig(
-#		# headless=True,
-#        chrome_instance_path='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-#	)
-#)
-
 import argparse
 parser = argparse.ArgumentParser()
-
-"""
-parser.add_argument('--book', default="本か映画の名前を入れて!")
-args = parser.parse_args()
-book_name = args.book
-
-search_type = ["New","Used","Rental", "Kindle","Audible"]
-categories = ["Book","Movie","Music","Other"]
-cat_options = {
-    "Book": {"Amazon" : "https://amazon.co.jp",
-        "Bookoff": "https://shopping.bookoff.co.jp/search",
-    }
-}   
-cats= []
-def get_cat(category):
-    cat_ops = []
-    cat_urls= []
-    for k1, v1 in cat_options.items():
-        cats.append(k1)
-        for k2, v2 in v1.items():
-            if k1 == category:
-                cat_ops.append(k2)
-                cat_urls.append(v2)
-    # print(cats, cat_ops, cat_urls)
-    return cats, cat_ops, cat_urls
-"""
 
 def ret_data(nums):
     image_list = []
@@ -212,6 +160,7 @@ def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
     return charafile
 
 def plot_generate(LLM,llm_key, chara_name,page_plot, title_plot="plot", cover_pages=1):
+    cover_page = cover_pages[-1]
     print(f"== Prompt Generation ==\n Starting {title_plot} for {cover_pages} creation by {LLM} for {chara_name}!\n")
     #apikey = os.getenv(LLM+"_KEY")
 
@@ -297,7 +246,7 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
         # by {llms[LLM][:6].upper()}
     else:
         system_content  = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
-        direction = f"\n ## Please generate one page image exactly following the page and panel layouts for [# Page {cover_pages}] with your best effort. \n"
+        direction = f"\n ## Please generate one page image exactly following the page and panel layouts for [# Page {cover_page}] with your best effort. \n"
         generated_prompt = direction + genai_text(LLM,llm_key, system_content, plot_prompt)
 
     anime_prompt = common_prompt + generated_prompt
@@ -308,15 +257,11 @@ async def image_generate(LLM,llm_key, prompt_out):
     #apikey = os.getenv(LLM+"_KEY")
     print(f"== Main Generation ==\n Starting Anime image generation by {LLM}!\n")
 
-    #img_up.save(img_up_path)
-    #image_base64 = encode_image(img_up)
-
     source_image = open(img_up_path, "rb")
 
     imagefile,promptfile = genai_image(LLM,llm_key, prompt_out,source_image)
 
     sns_link= f"""<a href="https://x.com/intent/post?text={story_name}%20
-        アイアンリーマン%20シンジの場合%20残り96日%20
         https%3A%2F%2Fktrips.net%2F100-days-to-ironman%2F
         &url={gradio_path}{imagefile}
         &hashtags={story_name},100Days2Ironman,ironman&openExternalBrowser=1">Post SNS</a>
@@ -327,11 +272,12 @@ async def image_generate(LLM,llm_key, prompt_out):
     return use_plot, imagefile, output_link
 
 
-async def plot_image_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1):
+async def plot_image_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages):
+    cover_page = cover_pages[-1]
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM} for {chara_name}!\n")
     #apikey = os.getenv(LLM+"_KEY")
     
-    if cover_pages == 0:
+    if cover_page == "0":
         use_plot, prompt_out = plot_generate(LLM,llm_key, chara_name,page_plot, "cover", cover_pages)
     else:
         if len(page_plot) < 50:
@@ -345,19 +291,10 @@ async def plot_image_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pa
     print(f"== Image Generation ==\n Starting Anime image generation by {LLM}!\n")
 
     source_image = open(img_up_path, "rb")
-    #image_base64 = encode_image(source_image) # open(img_up, "rb")
-    #with open(img_up_path, 'rb') as f:
-        #data = f.read()
-    #source_image = Image.open(BytesIO(data))
-
-    #filename   = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-    #imagefile = results_path+filename+'_image.jpg'
-    #promptfile = results_path+filename+'_prompt.txt'
 
     imagefile,promptfile = genai_image(LLM,llm_key, prompt_out,source_image)
 
     sns_link= f"""<a href="https://x.com/intent/post?text={story_name}%20
-        アイアンリーマン%20シンジの場合%20残り96日%20
         https%3A%2F%2Fktrips.net%2F100-days-to-ironman%2F
         &url={gradio_path}{imagefile}
         &hashtags={story_name},100Days2Ironman,ironman&openExternalBrowser=1">Post SNS</a>
@@ -380,7 +317,6 @@ def encode_image(image):
 
 def camera_detect(image,LLM):
     #apikey = os.getenv(LLM+"_KEY")
-
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
     image.save(img_up_path)
     image_base64 = encode_image(image)
@@ -452,12 +388,12 @@ with gr.Blocks() as animaker:
                 """)
     with gr.Row():
         with gr.Column():
-            with gr.Tab("StoryMaker"):
+            with gr.Tab("簡単アニメ作成"):
                 new_up = gr.Image(label="1. Upload Photo", sources="upload",
                     type="pil", mirror_webcam=False, width=250,height=250,) # value=charas[default_chara][1]0)
                 #new_name  = gr.Textbox(label="New member name", value="New", interactive=True, scale=1)
                 page_title = gr.Textbox(label="2. Title", placeholder="Just put title (e.g. Singapore trip...) for anime", interactive=True, scale=2)
-                cover_pages= gr.Dropdown(choices=[0,1,2,3,4], label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
+                cover_pages= gr.Dropdown(choices=cover_page_list, label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
                 cover_style= gr.Dropdown(choices=page_styles,label="4. Cover Image Style", value=default_style, interactive=True)
 
                 new_btn    = gr.Button("4. AniMaker!")
@@ -486,7 +422,7 @@ with gr.Blocks() as animaker:
                     gen_btn.click(fn=plot_image_generate, inputs=[LLM, img_up,chara_name,page_plot], 
                         outputs=[use_plot,output_image,output_link], api_name="plot_image_generate")
             """
-            with gr.Tab("PlotMaker"):
+            with gr.Tab("あらすじから作成"):
                 #with gr.Row():
                 img_up = gr.Image(label="1. Chara Photo", sources="upload",
                     type="pil", mirror_webcam=False, value=charas[default_chara][1], width=250,height=250)         
@@ -655,9 +591,6 @@ def genai_image(LLM,apikey, in_prompt,source_image):
             f.write(in_prompt)
         with open(imagefile, "wb") as f:
             f.write(base64.b64decode(image_response))
-            #image = Image.open(BytesIO(part.inline_data.data))
-            #image_path = f"results/edit_{image_count}.jpg"
-            #image.save(image_path)
         print("ImageFile saved: "+imagefile)
 
     return imagefile,promptfile
