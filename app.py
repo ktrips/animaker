@@ -662,9 +662,8 @@ def genai_image(LLM,apikey, in_prompt,source_image):
 
     return imagefile,promptfile
 
-
 parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
 parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
-animaker.launch(server_name=args.ip,server_port=args.port) #, auth=("usr","pswd1"))
+animaker.launch(server_name=args.ip,server_port=args.port) 
