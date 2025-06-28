@@ -613,7 +613,7 @@ def genai_text(LLM,apikey, system_content, in_prompt):
     
 def genai_image(LLM,apikey, in_prompt,source_image):
     apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
-    llm_model= llms[LLM]
+    #llm_model= llms[LLM]
     
     #source_image = open(img_up_path, "rb")
     #image_base64 = encode_image(source_image) # open(img_up, "rb")
