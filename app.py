@@ -95,12 +95,9 @@ default_color  = "指定なし"
 default_steps= 10
 default_cat  = "Book"
 
-#result_folder= "./results"
-#up_folder    = "./up"
 results_path = './results/'
 img_up_path= './image/img_up.jpg'
 chara_path = "./chara/"
-#chara_path = ""
 
 gradio_path='./gradio_api/file='
 gr.set_static_paths(paths=[Path.cwd().absolute()/"results"])
