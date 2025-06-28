@@ -4,7 +4,7 @@
 
 ## Sample app on the web:
 ANIME.Ktrips.net - 
-<img src="https://github.com/user-attachments/assets/050603ba-9d83-441b-b7cc-f826fee340d7" width="300">
+<img src="https://github.com/user-attachments/assets/050603ba-9d83-441b-b7cc-f826fee340d7" width="400">
 
 ## Deploy to gcloud run
 
