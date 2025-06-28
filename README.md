@@ -4,6 +4,9 @@
 
 ## Sample app on the web:
 ANIME.Ktrips.net - 
+![image](https://github.com/user-attachments/assets/050603ba-9d83-441b-b7cc-f826fee340d7)
+
+
 <img src="https://github.com/user-attachments/assets/85bc7877-f968-43e3-abb9-c2947eb5b486" width="300">
 
 ## Deploy to gcloud run
