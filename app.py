@@ -141,9 +141,11 @@ panel_shots = {"Full": "Full shot",
 
 import argparse
 parser = argparse.ArgumentParser()
-#parser.add_argument('--book', default="本か映画の名前を入れて!")
-#args = parser.parse_args()
-#book_name = args.book
+
+"""
+parser.add_argument('--book', default="本か映画の名前を入れて!")
+args = parser.parse_args()
+book_name = args.book
 
 search_type = ["New","Used","Rental", "Kindle","Audible"]
 categories = ["Book","Movie","Music","Other"]
@@ -164,7 +166,7 @@ def get_cat(category):
                 cat_urls.append(v2)
     # print(cats, cat_ops, cat_urls)
     return cats, cat_ops, cat_urls
-
+"""
 
 def ret_data(nums):
     image_list = []
@@ -637,6 +639,7 @@ def genai_image(LLM,apikey, in_prompt,source_image):
                 #top_k=genai_config["top_k"],
                 #max_output_tokens=genai_config["max_output_tokens"])
         )
+
         #imgnum = 0
         for part in response.candidates[0].content.parts:
             if part.text is not None:
