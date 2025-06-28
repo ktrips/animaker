@@ -197,7 +197,6 @@ async def save_data(chara_name: str, image_data: str):
 def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
     print("== Chara Generation ==\n Starting {chara_name} image generation!\n")
     #apikey = os.getenv(LLM+"_KEY")
-
     chara_up.save(chara_path)
     source_image = open(chara_path+chara_name+".jpg", "rb")
 
