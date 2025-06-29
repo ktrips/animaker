@@ -61,10 +61,10 @@ llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
         #"ANTHOLOPIC": "claude-3-5-sonnet-latest"}
 genai_config = {"temperature":0.9, 
                  "top_p":0.95, "top_k":40, #0.95, 
-                 "max_output_tokens": 4098} #8192, 2048, #256,
+                 "max_output_tokens": 8192,}  #4098 #2048, #256,
 cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4"]
 
-DEF_LLM = "GOOGLE_API"
+DEF_LLM = "GOOGLE_API" #"OPENAI_API" #
 default_key  = ""
 default_style= "Jp 90s"
 default_story= "Generate"
@@ -284,9 +284,15 @@ async def plot_image_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pa
             use_plot, prompt_out = plot_generate(LLM,llm_key, chara_name,page_plot, "title", cover_pages)
         else:
             use_plot, prompt_out = plot_generate(LLM,llm_key, chara_name,page_plot, "plot", cover_pages)
-
-    img_up.save(img_up_path)
+    
+    (width, height) = (img_up.width // 5, img_up.height // 5)
+    img_resized = img_up.resize((width, height), Image.LANCZOS)
+    img_resized.save(img_up_path)
     #image_base64 = encode_image(img_up)
+
+    #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
+    #en_prompt = genai_text(LLM,llm_key, trans_content, prompt_out)
+    #print(en_prompt)
 
     print(f"== Image Generation ==\n Starting Anime image generation by {LLM}!\n")
 
@@ -526,7 +532,6 @@ def genai_text(LLM,apikey, system_content, in_prompt):
             max_tokens = genai_config["max_output_tokens"]
         )
         result = response.choices[0].message.content
-
     #print("Generated Plot: "+result)
     return result
     
@@ -539,22 +544,24 @@ def genai_image(LLM,apikey, in_prompt,source_image):
     #img = Image.open(filename)
     with open(img_up_path, 'rb') as f:
         data = f.read()
-    #source_image = Image.open(BytesIO(data))
-    image_base64 = encode_image(Image.open(BytesIO(data)))
+    img = Image.open(BytesIO(data))
+    image_base64 = encode_image(img)
 
-    filename = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    filename  = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    imagefile = f"{results_path}{filename}_image.jpg" #{imgnum:03d}.jpg"
+    promptfile= f"{results_path}{filename}_prompt.txt" #{imgnum:03d}.txt"
+
     if LLM == "GOOGLE_API":
         #gemini.configure(api_key=apikey)
-        client  = genai.Client(api_key=apikey)
-        #gemini_client = gemini.GenerativeModel(llm_model, 
-            #generation_config={"temperature":temp_config, "max_output_tokens":max_config})
+        client   = genai.Client(api_key=apikey)
+        #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
+        #en_prompt= genai_text(LLM,apikey, trans_content, in_prompt)
+        #print(en_prompt)
         response = client.models.generate_content(model="gemini-2.0-flash-preview-image-generation",
             contents=[in_prompt, image_base64],
-            config=types.GenerateContentConfig(response_modalities=['Text', 'Image'])
-                #temperature=genai_config["temperature"],
-                #top_p=genai_config["top_p"],
-                #top_k=genai_config["top_k"],
-                #max_output_tokens=genai_config["max_output_tokens"])
+            config=types.GenerateContentConfig(response_modalities=['Text', 'Image'],
+                temperature=0.9 #genai_config["temperature"],
+            )
         )
         #imgnum = 0
         for part in response.candidates[0].content.parts:
@@ -564,13 +571,10 @@ def genai_image(LLM,apikey, in_prompt,source_image):
                 print(part.text)
             elif part.inline_data is not None:
                 #imgnum += 1
-                imagefile = f"{results_path}{filename}_image.jpg" #{imgnum:03d}.jpg"
-                promptfile= f"{results_path}{filename}_prompt.txt" #{imgnum:03d}.txt"
-                image = Image.open(BytesIO(part.inline_data.data))
-                image.save(imagefile)
-                #fp.write(f"![image](./example-image-{i+1}.png)")
                 with open(promptfile, 'a', encoding='utf-8') as f:
                     f.write(in_prompt)
+                image = Image.open(BytesIO(part.inline_data.data))
+                image.save(imagefile)
             print("ImageFile saved: " + imagefile)
         
     elif LLM == "OPENAI_API":
@@ -585,8 +589,6 @@ def genai_image(LLM,apikey, in_prompt,source_image):
             #n = generate_pages
         )
         image_response = response.data[0].b64_json
-        promptfile= results_path+filename+'_prompt.txt'
-        imagefile = results_path+filename+'_image.jpg'
         with open(promptfile, 'a', encoding='utf-8') as f:
             f.write(in_prompt)
         with open(imagefile, "wb") as f:
@@ -599,4 +601,4 @@ parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
 parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
-animaker.launch(server_name=args.ip,server_port=args.port) 
+animaker.launch(server_name=args.ip,server_port=args.port)
