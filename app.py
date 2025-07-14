@@ -28,8 +28,8 @@ from google.genai import types
 page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル",
         "Arukikata": "地球の歩き方風の表紙",
         "Ukiyoe": "浮世絵の葛飾北斎風に変換。太い輪郭線と落ち着いた和風色彩で描き、背景には浮世絵スタイルの山や波を加える。",
-        "Retro": "レトロゲーム風に変換。8bitドット絵スタイルで、カラフルかつレトロな雰囲気にする。",}
-"""
+        "Retro": "レトロゲーム風に変換。8bitドット絵スタイルで、カラフルかつレトロな雰囲気にする。",
+
         "Ghibli": "スタジオジブリ風のアニメイラストに変換。自然豊かな背景、柔らかい線画、温かみのある色合いを表現。",
         "Pixar": "ディズニー・ピクサー風の3Dアニメスタイルに変換。大きな瞳、立体的な質感、明るい色合いで描画。",
         "Jojo": "アニメのジョジョ風（ジョジョの奇妙な冒険）に変換。太い輪郭線、激しい陰影、ポーズを強調し、カラフルな背景でジョジョの奇妙な冒険風にする。",
@@ -39,8 +39,8 @@ page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような�
         "Eva": "エヴァンゲリオン風に変換。モダンなメカニカルデザインと、ダークでシリアスな色調を追加。",
         "Kimetsu": "鬼滅の刃風に変換。和装デザインと、呼吸技のエフェクトを加えたスタイリッシュなタッチにする。",
         "Akira": "アニメのAKIRA風に変換。ネオ東京の荒廃した都市を背景に、赤いバイクに乗ったキャラクターを描く。赤や黒を基調とした色使いで、ネオンライトや未来的な都市の雰囲気を追加。",
-        "Chikawa": "ちいかわ風に変換してください。丸くて小さな体型、シンプルな線画、ほのぼのした背景で描いてください。"
-"""
+        "Chikawa": "ちいかわ風に変換してください。丸くて小さな体型、シンプルな線画、ほのぼのした背景で描いてください。",
+}
 
 page_sizes= {"512×768": "512 × 768 (portrait orientation)",
             "1024x1536": "1024 × 1536 (portrait orientation)",
@@ -360,6 +360,8 @@ def flip(im):
     return np.fliplr(im)
 def chara_picture(chara_name):
     return charas[chara_name][1]
+def style_change(page_style):
+    return page_styles[page_style]
 def llm_change(LLM):
     return llms[LLM]
 
@@ -582,6 +584,8 @@ with gr.Blocks() as animaker:
         with gr.Column():
             with gr.Accordion(label="Options:", open=False):
                 page_style= gr.Dropdown(choices=page_styles,label="Anime Style", value=default_style, interactive=True)
+                style_desc= gr.Markdown(value=page_styles[default_style])
+                page_style.change(style_change, page_style, style_desc)
                 page_size = gr.Dropdown(choices=page_sizes,label="Canvas size",  value=default_size, interactive=True)
                 page_story= gr.Dropdown(choices=page_storys,label="Generate/Manual", value=default_story, interactive=True)
                 image_quality= gr.Dropdown(choices=image_qualities,label="Image quality", value=default_quality, interactive=True)
