@@ -65,12 +65,14 @@ genai_config = {"temperature":0.9,
                  "top_p":0.95, "top_k":40, #0.95, 
                  "max_output_tokens": 8192,}  #4098 #2048, #256,
 
-dream_list = ["", "宇宙飛行士","アイドル","大リーグ選手","人気YouTuber",
-              "ノーベル賞","パティシエ","大統領","エベレスト登頂","ロックスター","サッカー選手"]
-cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4"]
+dream_list = ["", "宇宙飛行士","アイドル","スポーツ選手","人気YouTuber","人気アナウンサー","プロゲーマー","ドクターX",
+              "ノーベル賞","パティシエ","大統領","総理大臣","エベレスト登頂","ロックスター","アーティスト"]
+cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4","Figure5","Gcode6"]
+runner_flag = "無し"
+title3d_flag= "NO"
 
-DEF_LLM = "OPENAI_API" #"GOOGLE_API" #
-default_key  = os.getenv(DEF_LLM+"_KEY")
+DEF_LLM      = "OPENAI_API" #"GOOGLE_API" #
+default_key  = os.getenv(DEF_LLM+"_KEY") #"xxx" #
 default_style= "Jp 90s"
 default_story= "Generate"
 default_size = "1024x1536" #"1536x1024" #"1024x1024"
@@ -245,20 +247,61 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
     - その他の登場人物: もし他の登場人物がいたら、表示して下さい。
     """
 
-    #if title_plot == "cover":
+    generated_prompt = ""
     if cover_page == "0":
         direction = "\n ## Please generate one page cover with one big image exactly following the prompt with your best effort. \n"
         generated_prompt = direction + f""" Please generate Manga Cover page.
             漫画のカバーを{page_styles[default_style]}のように作って下さい。
             {page_plot}をタイトルとして、画像内の上側に大きく配置。
             著者名として、「Made by AniMaker」を題名の下に表示。
+            そこに写っている人物の顔の特徴や表情、装飾品、髪型などは、写真を忠実に再現して下さい。
+            その中心人物の人数と配置は正確に描写して下さい。
             写真を大きく中心に、印象的に配置。
+            全体感はプロット{use_plot}のテイストを入れて描写。
+            主人公は{use_plot}に基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、{page_plot}の特徴を正確に反映して、描写して下さい。
+            漫画のカバーページの背景は{use_plot}に基づいた4コマ漫画にして下さい。そのストーリーは{use_plot}の起承転結をつけて、背景として描いて下さい。
+            {page_plot}になった将来の姿を描いて下さい。
+
+            Background setting:
+            - Image quality: crisp and clear (used consistently in every panel)
+            - Font: Noto Sans JP (used consistently in every panel)
+            - Panel Margins: Each panel should have a uniform margin of 10px on all four sides internally (between the artwork and the panel border).
+            - Panel Border: All panels should have a consistent border, for example, a 2px solid black line.
+            - Gutter Width: The space (gutter) between panels should be uniform, for example, 20px horizontally and vertically.
+            - Page Margins: The entire page (canvas) should have a uniform margin of 30px around the area where panels are laid out.
+            """
+        # by {llms[LLM][:6].upper()}
+    elif cover_page == "5": #Figure
+        direction = "\n ## Please generate one page exactly following the prompt with your best effort. \n"
+        common_prompt = direction + f""" Please generate Manga page.
+            キャラクターを{page_styles[default_style]}のように作って下さい。
             全体感はプロット{use_plot}のテイストを入れて描写。
             主人公は{use_plot}に基づいた衣装、髪型、装飾にして下さい。
             背景も{use_plot}に基づいたものにして下さい。
             {page_plot}になった将来の姿を描いて下さい。
             """
-        # by {llms[LLM][:6].upper()}
+        generated_prompt = f"""Create a 1/7 scale commercialized figurine of whole standing body of the characters in the picture, 
+            in a Japanese anime style, in a real environment. The figurine is placed on a computer desk. 
+            The figurine has a round transparent acrylic base, with no text on the base. 
+            The content on the computer screen is a 3D modeling process of this figurine. 
+            Next to the computer screen is a toy packaging box, designed in a style reminiscent of high-quality collectible figures, printed with original artwork. 
+            The packaging features two-dimensional flat illustrations."""
+
+    elif cover_page == "6": #Gcode
+        direction = "\n ## Please generate one page exactly following the prompt with your best effort. \n"
+        common_prompt = direction + f""" Please generate Manga page.
+            キャラクターを{page_styles[default_style]}のように作って下さい。
+            全体感はプロット{use_plot}のテイストを入れて描写。
+            主人公は{use_plot}に基づいた衣装、髪型、装飾にして下さい。
+            背景も{use_plot}に基づいたものにして下さい。
+            {page_plot}になった将来の姿を描いて下さい。
+            """
+        generated_prompt = f"""こ画像からフィギュアを作るために、以下の条件で画像を生成して下さい：
+              - 三面図のうちの前面・側面・背面を作成 
+            　- ランナー{runner_flag}
+            　- 足元に透明円形アクリル台座"""
+        if title3d_flag == "YES":
+            generated_prompt +=  f"頭の上に円弧状に浮かぶ立体文字「{page_plot}」と表示（アニメタイトル風）"
     else:
         system_content  = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
         direction = f"\n ## Please generate one page image exactly following the page and panel layouts for [# Page 1] with your best effort. \n"
