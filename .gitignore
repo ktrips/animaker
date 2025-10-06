@@ -51,3 +51,5 @@ test*
 agent_history*
 img*
 *.sh
+image*
+check*
