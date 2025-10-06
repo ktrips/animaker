@@ -52,7 +52,6 @@ page_storys= {"Manual": "主人公を中心として、入力されたページ�
 image_qualities= ["low","medium","high"]
 generate_pages = [1,2,3,4,5]
 page_panels    = [1,2,3,4,5]
-
 colors = ["指定なし","黒","茶","赤","青","黄","緑","紫","ピンク","オレンジ","白"]
 
 import vertexai
