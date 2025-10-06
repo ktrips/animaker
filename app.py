@@ -59,8 +59,8 @@ import vertexai
 from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
 
 llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
-        "GOOGLE_API": "gemini-2.0-flash"} #"gemini-2.0-flash-preview-image-generation",
-        #"ANTHOLOPIC": "claude-3-5-sonnet-latest"}
+        "GOOGLE_API": "gemini-2.0-flash", #"gemini-2.0-flash-preview-image-generation",
+        "ANTHOLOPIC": "claude-3-5-sonnet-latest"}
 genai_config = {"temperature":0.9, 
                  "top_p":0.95, "top_k":40, #0.95, 
                  "max_output_tokens": 8192,}  #4098 #2048, #256,
@@ -72,7 +72,7 @@ runner_flag = "無し"
 title3d_flag= "NO"
 
 DEF_LLM      = "OPENAI_API" #"GOOGLE_API" #
-default_key  = os.getenv(DEF_LLM+"_KEY") #"xxx" #
+default_key  = "" #os.getenv(DEF_LLM+"_KEY") #
 default_style= "Jp 90s"
 default_story= "Generate"
 default_size = "1024x1536" #"1536x1024" #"1024x1024"
@@ -257,9 +257,12 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
             そこに写っている人物の顔の特徴や表情、装飾品、髪型などは、写真を忠実に再現して下さい。
             その中心人物の人数と配置は正確に描写して下さい。
             写真を大きく中心に、印象的に配置。
-            全体感はプロット{use_plot}のテイストを入れて描写。
-            主人公は{use_plot}に基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、{page_plot}の特徴を正確に反映して、描写して下さい。
-            漫画のカバーページの背景は{use_plot}に基づいた4コマ漫画にして下さい。そのストーリーは{use_plot}の起承転結をつけて、背景として描いて下さい。
+            全体感は以下のプロットのテイストを入れて描写して下さい。
+            ## Plot Start ##
+            {use_plot}
+            ## Plot End ##
+            主人公はプロットに基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、{page_plot}の特徴を正確に反映して、描写して下さい。
+            漫画のカバーページの背景はプロットに基づいた4コマ漫画にして下さい。そのストーリーはプロットの起承転結をつけて、背景として描いて下さい。
             {page_plot}になった将来の姿を描いて下さい。
 
             Background setting:
@@ -368,7 +371,7 @@ def encode_image(image):
     return base64_image
 
 def camera_detect(image,LLM):
-    apikey = os.getenv(LLM+"_KEY")
+    #apikey = os.getenv(LLM+"_KEY")
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
     image.save(img_up_path)
     image_base64 = encode_image(image)
@@ -419,12 +422,12 @@ def style_change(page_style):
 def llm_change(LLM):
     return llms[LLM]
 
-def genai_text(LLM,apikey, system_content, in_prompt):
-    apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
+def genai_text(LLM,llm_key, system_content, in_prompt):
+    #apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
     llm_model= llms[LLM]
 
     if LLM == "GOOGLE_API":
-        gemini.configure(api_key=apikey)
+        gemini.configure(api_key=llm_key)
         gemini_client = gemini.GenerativeModel(llm_model)
             #GenerationConfig(temperature=genai_config["temperature"], max_output_tokens=genai_config["max_output_tokens"]))
             #generation_config=gemini_config)
@@ -432,7 +435,7 @@ def genai_text(LLM,apikey, system_content, in_prompt):
         result  = response.text
         
     elif LLM == "OPENAI_API":
-        gpt_client = OpenAI(api_key=apikey)
+        gpt_client = OpenAI(api_key=llm_key)
         #system_content = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
         response = gpt_client.chat.completions.create(
             model=llm_model,
@@ -456,8 +459,8 @@ def genai_text(LLM,apikey, system_content, in_prompt):
     #print("Generated Plot: "+result)
     return result
     
-def genai_image(LLM,apikey, in_prompt,source_image):
-    apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
+def genai_image(LLM,llm_key, in_prompt,source_image):
+    #apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
     print(f"== Image Generation by {LLM} ==\n")
 
     source_image = open(img_up_path, "rb")
@@ -474,8 +477,8 @@ def genai_image(LLM,apikey, in_prompt,source_image):
     raspifile = ""
 
     if LLM == "GOOGLE_API":
-        #gemini.configure(api_key=apikey)
-        client   = genai.Client(api_key=apikey)
+        #gemini.configure(api_key=llm_key)
+        client   = genai.Client(api_key=llm_key)
         #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
         #en_prompt= genai_text(LLM,apikey, trans_content, in_prompt)
         #print(en_prompt)
@@ -501,7 +504,7 @@ def genai_image(LLM,apikey, in_prompt,source_image):
             print("ImageFile saved: " + imagefile)
         
     elif LLM == "OPENAI_API":
-        gpt_client = OpenAI(api_key=apikey)
+        gpt_client = OpenAI(api_key=llm_key)
         generate_model = "gpt-image-1"
         response = gpt_client.images.edit(
             model  = generate_model,
