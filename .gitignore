@@ -3,10 +3,10 @@
 .DS_Store
 .AppleDouble
 .LSOverride
+.gitignore
 
 # Icon must end with two \r
 Icon
-
 
 # Thumbnails
 ._*
@@ -44,9 +44,13 @@ config.py
 Arc/
 result/
 results/
+image/
+chara/
 
 ## Test
 test*
 agent_history*
 img*
 *.sh
+image*
+check*
