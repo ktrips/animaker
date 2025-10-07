@@ -56,7 +56,6 @@ colors = ["指定なし","黒","茶","赤","青","黄","緑","紫","ピンク","
 
 import vertexai
 from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
-
 llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
         "GOOGLE_API": "gemini-2.0-flash", #"gemini-2.0-flash-preview-image-generation",
         "ANTHOLOPIC": "claude-3-5-sonnet-latest"}
