@@ -59,7 +59,7 @@ import vertexai
 from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
 llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
         "GOOGLE_API": "gemini-2.0-flash", #"gemini-2.0-flash-preview-image-generation",
-        "ANTHOLOPIC": "claude-3-5-sonnet-latest"}
+        "ANTHOLOPIC_API": "claude-3-5-sonnet-latest"}
 genai_config = {"temperature":0.9, 
                  "top_p":0.95, "top_k":40, #0.95, 
                  "max_output_tokens": 8192,}  #4098 #2048, #256,
