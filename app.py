@@ -5,6 +5,7 @@ import base64
 from io import BytesIO
 from PIL import Image,ImageFilter
 import numpy as np
+
 import argparse
 
 from datetime import datetime
@@ -52,22 +53,25 @@ page_storys= {"Manual": "主人公を中心として、入力されたページ�
 image_qualities= ["low","medium","high"]
 generate_pages = [1,2,3,4,5]
 page_panels    = [1,2,3,4,5]
-
 colors = ["指定なし","黒","茶","赤","青","黄","緑","紫","ピンク","オレンジ","白"]
 
 import vertexai
 from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
-
 llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
-        "GOOGLE_API": "gemini-2.0-flash"} #"gemini-2.0-flash-preview-image-generation",
-        #"ANTHOLOPIC": "claude-3-5-sonnet-latest"}
+        "GOOGLE_API": "gemini-2.0-flash", #"gemini-2.0-flash-preview-image-generation",
+        "ANTHOLOPIC_API": "claude-3-5-sonnet-latest"}
 genai_config = {"temperature":0.9, 
                  "top_p":0.95, "top_k":40, #0.95, 
                  "max_output_tokens": 8192,}  #4098 #2048, #256,
-cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4"]
 
-DEF_LLM = "OPENAI_API" #"GOOGLE_API" #
-default_key  = ""
+dream_list = ["", "宇宙飛行士","アイドル","スポーツ選手","人気YouTuber","人気アナウンサー","プロゲーマー","ドクターX",
+              "ノーベル賞","パティシエ","大統領","総理大臣","エベレスト登頂","ロックスター","アーティスト"]
+cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4", "Figure5","ThreeV6","Gcode7"]
+runner_flag = "無し"
+title3d_flag= "NO"
+
+DEF_LLM      = "OPENAI_API" #"GOOGLE_API" #
+default_key  = os.getenv(DEF_LLM+"_KEY") #
 default_style= "Jp 90s"
 default_story= "Generate"
 default_size = "1024x1536" #"1536x1024" #"1024x1024"
@@ -87,16 +91,17 @@ gradio_path='./gradio_api/file='
 gr.set_static_paths(paths=[Path.cwd().absolute()/"results"])
 story_name = "100日でアイアンマンになる物語"
 
-default_chara= "シンジ"
+default_chara= "ケン" #"シンジ"
 charas = {
     "シンジ": ["Shinji", chara_path+"shinji_anime.jpg","赤いトライアスロンウェアに身を包んだ、30代中肉中背の男性。髪は短く、黒色の髪。ニヤリと笑っている","黒"],
     "ノリコ": ["Noriko", chara_path+"noriko_anime.jpg","ブルーのランニングウェアに身を包んだ、ギャルっぽい女の子。髪はショートで青色の髪。スポーティーで笑顔が可愛い","青"],
     "ゴトウ": ["Goto",   chara_path+"goto_anime.jpg","黒いウェアにサングラスをかけている。40代の男性で鬼軍曹のような厳しい雰囲気。髪はベリーショートで、真っ黒","黒"],
     "ハラダ": ["Harada", chara_path+"harada_anime.jpg","オレンジのトライアスロンウェアを着た、40代の若手経営者。髪はお洒落なパーマで金髪。キラキラして自信ありげな笑みを浮かべる","金"],
     "マツイ": ["Matsui", chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。髪の毛はミディアムで緑色","紫"],
-    "ケン":   ["Ken",   chara_path+"ken_anime.jpg","黒のトライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
-    "New":   ["new",   chara_path+"others_anime.jpg","それぞれメンバーの仲間たち","黒"],
-#    "ナオト": ["Naoto",  chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
+    "ケン":   ["Ken",   chara_path+"ken_anime.jpg","黒のTシャツに蛍光グリーンのマウンテンジャケットを着たバックパッカー。髪はサラサラで赤色","赤"], # トライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
+    "ナオト": ["Naoto",  chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
+    "ユラ": ["Yura",  chara_path+"yura_anime.jpg","ユラは芯が強く賢い女子高生だが、優しくいつも笑顔でみんなを和ませている。","ピンク"],
+    #"New":   ["new",   chara_path+"others_anime.jpg","それぞれメンバーの仲間たち","黒"],
 #    "ケニー":  ["Kenny", chara_path+"kenny_anime.jpg","ケニーは世界中を旅している20代の大学生。引き締まった体をしている","赤"],
 }
 panel_sizes = {"Small": "Small size",
@@ -161,14 +166,17 @@ async def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
     charafile = genai_image(LLM,llm_key, anime_prompt,source_image)
     return charafile
 
-def plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1):
+def plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Generation ==\n Starting {cover_pages} creation by {LLM} for {chara_name}!\n")
 
     charas_prompt= ""
     #if title_plot in ["title","cover"]:
-    if len(page_plot) < 100:
-        system_content = "このシステムは、テキストが提供された時に、それをタイトルとした物語のあらすじを300字程度で、起承転結を付けて生成します。"
+    if dream_choice != "":
+        system_content = f"このシステムは、テキストが提供された時に、「My Dream: {dream_choice}」をタイトルとして、主人公を{chara_name}とした物語のあらすじを300字程度で、起承転結を付けて生成します。"
+        use_plot = genai_text(LLM,llm_key, system_content, dream_choice)
+    elif len(page_plot) < 100:
+        system_content = f"このシステムは、テキストが提供された時に、「My Dream: {page_plot}」をタイトルとして、主人公を{chara_name}とした物語のあらすじを300字程度で、起承転結を付けて生成します。"
         use_plot = genai_text(LLM,llm_key, system_content, page_plot)
     else:
         use_plot = page_plot
@@ -205,12 +213,14 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 - Self-evaluation is not required.
 - Please output images only.
     """
+    all_pages = generate_pages[3]
 
     plot_prompt = f"""「{chara_name}」はこの話の主人公で、この画像{img_up}のような人物です。他の登場人物としては、{charas.keys()}がいます。
 各登場人物の特徴は以下のようなものです。各登場人物の服装と表情は、そのシーンに合ったものにして下さい。
 {charas_prompt}
 各登場人物は、そのシーンに合った服装、表情をしています。
-以下の[# プロット]から、n=1からn={generate_pages[3]}までの、{generate_pages[3]}ページのプロンプトを生成して下さい。1ページには、m=1からm={page_panels[4]}までの{page_panels[4]}つのPanelを作り、各Panel毎に以下のフォーマットに従って、1ページに{page_panels[4]}つのpanelを記述したプロンプトを作成してください。
+以下の[# プロット]から、n=1からn={cover_page}までの、{cover_page}ページのプロンプトを生成して下さい。
+1ページには、m=1からm={page_panels[4]}までの{page_panels[4]}つのPanelを作り、各Panel毎に以下のフォーマットに従って、1ページに{page_panels[4]}つのpanelを記述したプロンプトを作成してください。
 プロット全体を通した[# テキストネームタイトル] をつけて下さい。
 各ページ毎の[# ページタイトル]もつけて下さい。
 プロットに記述したランドマークや商品、人物はなるべく正確に写実的に表現して絵柄に入れて下さい。
@@ -236,20 +246,67 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
     - その他の登場人物: もし他の登場人物がいたら、表示して下さい。
     """
 
-    #if title_plot == "cover":
+    generated_prompt = ""
     if cover_page == "0":
         direction = "\n ## Please generate one page cover with one big image exactly following the prompt with your best effort. \n"
         generated_prompt = direction + f""" Please generate Manga Cover page.
             漫画のカバーを{page_styles[default_style]}のように作って下さい。
             {page_plot}をタイトルとして、画像内の上側に大きく配置。
-            著者名として、「作画: アニメイカー」を題名の下に表示。
+            著者名として、「Made by AniMaker」を題名の下に表示。
+            そこに写っている人物の顔の特徴や表情、装飾品、髪型などは、写真を忠実に再現して下さい。
+            その中心人物の人数と配置は正確に描写して下さい。
             写真を大きく中心に、印象的に配置。
-            全体感はプロット{use_plot}のテイストを入れて描写。
+            全体感は以下のプロットのテイストを入れて描写して下さい。
+            ## Plot Start ##
+            {use_plot}
+            ## Plot End ##
+            主人公はプロットに基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、{page_plot}の特徴を正確に反映して、描写して下さい。
+            漫画のカバーページの背景はプロットに基づいた4コマ漫画にして下さい。そのストーリーはプロットの起承転結をつけて、背景として描いて下さい。
+            {page_plot}になった将来の姿を描いて下さい。
+
+            Background setting:
+            - Image quality: crisp and clear (used consistently in every panel)
+            - Font: Noto Sans JP (used consistently in every panel)
+            - Panel Margins: Each panel should have a uniform margin of 10px on all four sides internally (between the artwork and the panel border).
+            - Panel Border: All panels should have a consistent border, for example, a 2px solid black line.
+            - Gutter Width: The space (gutter) between panels should be uniform, for example, 20px horizontally and vertically.
+            - Page Margins: The entire page (canvas) should have a uniform margin of 30px around the area where panels are laid out.
             """
         # by {llms[LLM][:6].upper()}
+    elif cover_page == "5": #Figure
+        direction = "\n ## Please generate one page exactly following the prompt with your best effort. \n"
+        common_prompt = direction + f""" Please generate Manga page.
+            キャラクターを{page_styles[default_style]}のように作って下さい。
+            全体感はプロット{use_plot}のテイストを入れて描写。
+            主人公は{use_plot}に基づいた衣装、髪型、装飾にして下さい。
+            背景も{use_plot}に基づいたものにして下さい。
+            {page_plot}になった将来の姿を描いて下さい。
+            """
+        generated_prompt = f"""Create a 1/7 scale commercialized figurine of whole standing body of the characters in the picture, 
+            in a Japanese anime style, in a real environment. The figurine is placed on a computer desk. 
+            The figurine has a round transparent acrylic base, with no text on the base. 
+            The content on the computer screen is a 3D modeling process of this figurine. 
+            Next to the computer screen is a toy packaging box, designed in a style reminiscent of high-quality collectible figures, printed with original artwork. 
+            The packaging features two-dimensional flat illustrations."""
+
+    elif cover_page == "6": #3views
+        direction = "\n ## Please generate one page exactly following the prompt with your best effort. \n"
+        common_prompt = direction + f""" Please generate Manga page.
+            キャラクターを{page_styles[default_style]}のように作って下さい。
+            全体感はプロット{use_plot}のテイストを入れて描写。
+            主人公は{use_plot}に基づいた衣装、髪型、装飾にして下さい。
+            背景も{use_plot}に基づいたものにして下さい。
+            {page_plot}になった将来の姿を描いて下さい。
+            """
+        generated_prompt = f"""この画像からフィギュアを作るために、以下の条件で画像を生成して下さい：
+             - 三面図として前面・側面・背面のセットを作成 
+             - ランナー{runner_flag}
+             - 足元に透明円形アクリル台座"""
+        if title3d_flag == "YES":
+            generated_prompt +=  f"頭の上に円弧状に浮かぶ立体文字「{page_plot}」と表示（アニメタイトル風）"
     else:
         system_content  = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
-        direction = f"\n ## Please generate one page image exactly following the page and panel layouts for [# Page {cover_page}] with your best effort. \n"
+        direction = f"\n ## Please generate one page image exactly following the page and panel layouts for [# Page 1] with your best effort. \n"
         generated_prompt = direction + genai_text(LLM,llm_key, system_content, plot_prompt)
 
     anime_prompt = common_prompt + generated_prompt
@@ -267,11 +324,11 @@ def image_generate(LLM,llm_key, prompt_out):
     return use_plot, imagefile,promptfile # output_link
 """
 
-async def plot_image_generate(LLM,llm_key, img_up,page_plot, cover_pages):
+async def plot_image_generate(LLM,llm_key, img_up,page_plot, cover_pages, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM}!\n")
     chara_name = "New" #default_chara
-    use_plot, prompt_out = plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages)
+    use_plot, prompt_out = plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages, dream_choice)
 
     resize_width = 512
     resize_proportion = resize_width / img_up.width
@@ -300,8 +357,7 @@ async def plot_image_generate(LLM,llm_key, img_up,page_plot, cover_pages):
     prompt_link = f'<a href="{gradio_path}{promptfile}">Prompt</a>'
     output_link = sns_link + ' | ' + prompt_link
     """
-    return use_plot, imagefile,promptfile #, output_link
-
+    return use_plot, imagefile, promptfile #, output_link
 
 def camera_nodetect(image):
     image.save(img_up_path)
@@ -314,7 +370,7 @@ def encode_image(image):
     return base64_image
 
 def camera_detect(image,LLM):
-    apikey = os.getenv(LLM+"_KEY")
+    #apikey = os.getenv(LLM+"_KEY")
     camera_prompt = "提供された画像の中に写っている人物の、おおよその年齢、性別を類推して下さい。髪型、表情、服装を詳細に簡潔に説明して下さい。"
     image.save(img_up_path)
     image_base64 = encode_image(image)
@@ -365,12 +421,12 @@ def style_change(page_style):
 def llm_change(LLM):
     return llms[LLM]
 
-def genai_text(LLM,apikey, system_content, in_prompt):
-    apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
+def genai_text(LLM,llm_key, system_content, in_prompt):
+    #apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
     llm_model= llms[LLM]
 
     if LLM == "GOOGLE_API":
-        gemini.configure(api_key=apikey)
+        gemini.configure(api_key=llm_key)
         gemini_client = gemini.GenerativeModel(llm_model)
             #GenerationConfig(temperature=genai_config["temperature"], max_output_tokens=genai_config["max_output_tokens"]))
             #generation_config=gemini_config)
@@ -378,7 +434,7 @@ def genai_text(LLM,apikey, system_content, in_prompt):
         result  = response.text
         
     elif LLM == "OPENAI_API":
-        gpt_client = OpenAI(api_key=apikey)
+        gpt_client = OpenAI(api_key=llm_key)
         #system_content = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
         response = gpt_client.chat.completions.create(
             model=llm_model,
@@ -402,8 +458,8 @@ def genai_text(LLM,apikey, system_content, in_prompt):
     #print("Generated Plot: "+result)
     return result
     
-def genai_image(LLM,apikey, in_prompt,source_image):
-    apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
+def genai_image(LLM,llm_key, in_prompt,source_image):
+    #apikey = os.getenv(LLM+"_KEY") if apikey == "" else apikey
     print(f"== Image Generation by {LLM} ==\n")
 
     source_image = open(img_up_path, "rb")
@@ -417,10 +473,11 @@ def genai_image(LLM,apikey, in_prompt,source_image):
     filename  = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
     imagefile = f"{results_path}{filename}_image.jpg" #{imgnum:03d}.jpg"
     promptfile= f"{results_path}{filename}_prompt.txt" #{imgnum:03d}.txt"
+    raspifile = ""
 
     if LLM == "GOOGLE_API":
-        #gemini.configure(api_key=apikey)
-        client   = genai.Client(api_key=apikey)
+        #gemini.configure(api_key=llm_key)
+        client   = genai.Client(api_key=llm_key)
         #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
         #en_prompt= genai_text(LLM,apikey, trans_content, in_prompt)
         #print(en_prompt)
@@ -442,10 +499,11 @@ def genai_image(LLM,apikey, in_prompt,source_image):
                     f.write(in_prompt)
                 image = Image.open(BytesIO(part.inline_data.data))
                 image.save(imagefile)
+                image.save("image.jpg")
             print("ImageFile saved: " + imagefile)
         
     elif LLM == "OPENAI_API":
-        gpt_client = OpenAI(api_key=apikey)
+        gpt_client = OpenAI(api_key=llm_key)
         generate_model = "gpt-image-1"
         response = gpt_client.images.edit(
             model  = generate_model,
@@ -460,9 +518,12 @@ def genai_image(LLM,apikey, in_prompt,source_image):
             f.write(in_prompt)
         with open(imagefile, "wb") as f:
             f.write(base64.b64decode(image_response))
+        with open("image.jpg", "wb") as f:
+            f.write(base64.b64decode(image_response))
         print("ImageFile saved: "+imagefile)
         #./gradio_api/file=./results/anime_
-    return imagefile,promptfile
+
+    return imagefile, promptfile
 
 
 with gr.Blocks() as animaker:
@@ -496,8 +557,9 @@ with gr.Blocks() as animaker:
                 new_up = gr.Image(label="1. Upload Photo", sources="upload",
                     type="pil", mirror_webcam=False, width=250,height=250,) # value=charas[default_chara][1]0)
                 #new_name  = gr.Textbox(label="New member name", value="New", interactive=True, scale=1)
-                page_title = gr.Textbox(label="2. Title", placeholder="Just put title (e.g. Singapore trip...) for anime", interactive=True, scale=2)
-                cover_pages= gr.Dropdown(choices=cover_page_list, label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
+                dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
+                page_title  = gr.Textbox(label="2. Title", placeholder="Just put title (e.g. Singapore trip...) for anime", interactive=True, scale=2)
+                cover_pages = gr.Dropdown(choices=cover_page_list, label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
                 #cover_style= gr.Dropdown(choices=page_styles,label="4. Cover Image Style", value=default_style, interactive=True)
 
                 new_btn      = gr.Button("4. AniMaker!")
@@ -512,7 +574,7 @@ with gr.Blocks() as animaker:
                     sys_msg   = gr.Markdown(label="System message") 
                     use_plot  = gr.Markdown(label="Generated plot")
                     prompt_out= gr.Markdown(label="Generated prompt")
-                new_btn.click(fn=plot_image_generate, inputs=[LLM,llm_key, new_up,page_title, cover_pages], 
+                new_btn.click(fn=plot_image_generate, inputs=[LLM,llm_key, new_up,page_title, cover_pages, dream_choice], 
                     outputs=[use_plot,output_image,output_prompt], api_name="plot_image_generate")
                 #new_btn.click(plot_generate, [LLM,llm_key,new_up,cover_style,page_title,cover_pages], [use_plot,prompt_out], queue=False).then(
                     #raise_exception, sys_msg, None).success(
@@ -544,12 +606,13 @@ with gr.Blocks() as animaker:
                 #source_image = open(img_up_path, "rb")
                 chara_name= gr.Dropdown(choices=charas, label="1. Chara", value=default_chara, interactive=True, scale=1) #Textbox(label="Chara Name", interactive=True)
                 chara_name.change(chara_picture, chara_name, img_up)
-                page_plot = gr.Textbox(label="2. Plot", placeholder="Put your story plot here", interactive=True, scale=2)
-                cover_pages= gr.Dropdown(choices=cover_page_list, label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
-                plot_btn = gr.Button("3. Generate Prompt")
-                prompt_out= gr.Textbox(label="3. Prompt Out", max_lines=500, 
-                    placeholder="Upload photo & plot, then edit results", interactive=True, scale=2)
-                plot_btn.click(fn=plot_generate, inputs=[LLM,llm_key, img_up,chara_name,page_plot,cover_pages], 
+                dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
+                page_plot   = gr.Textbox(label="2. Plot", placeholder="Put your story plot here", interactive=True, scale=2)
+                cover_pages = gr.Dropdown(choices=cover_page_list, label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
+                plot_btn    = gr.Button("3. Generate Prompt")
+                prompt_out  = gr.Textbox(label="3. Prompt Out", max_lines=500, 
+                placeholder ="Upload photo & plot, then edit results", interactive=True, scale=2)
+                plot_btn.click(fn=plot_generate, inputs=[LLM,llm_key, img_up,chara_name,page_plot,cover_pages, dream_choice], 
                                outputs=[page_plot, prompt_out], api_name="plot_generate")
 
                 #cover_pages= gr.Dropdown(choices=[0,1,2,3,4], label="4. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)    
@@ -628,4 +691,4 @@ parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
 parser.add_argument("--port", type=int, default=8080, help="Port to listen on")
 args = parser.parse_args()
-animaker.launch(server_name=args.ip,server_port=args.port, auth=(animaker_usr,animaker_pswd))
+animaker.launch(server_name=args.ip,server_port=args.port) #, auth=(animaker_usr,animaker_pswd))

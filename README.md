@@ -14,7 +14,7 @@ ANIME.Ktrips.net -
 $ git clone https://github.com/ktrips/animaker.git
 $ cd animaker
 $ gcloud services enable run.googleapis.com
-$ mkdir results chara imgup
+$ mkdir results chara image
 $ vi .env
 ```
 ### Pepare AI API keys in .env file
@@ -24,6 +24,9 @@ Create .env file with the API keys:
 OPENAI_API_KEY=XXXX
 GOOGLE_API_KEY=YYYY
 ANTHOLOPOC_API_KEY=ZZZZ
+
+ANIMAKER_USR=uuu
+ANIMAKER_PSWD=ppp
 ```
 
 ### Go and get Google project ID and enable Google APIs
