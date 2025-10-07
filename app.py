@@ -5,6 +5,7 @@ import base64
 from io import BytesIO
 from PIL import Image,ImageFilter
 import numpy as np
+
 import argparse
 
 from datetime import datetime
@@ -65,7 +66,7 @@ genai_config = {"temperature":0.9,
 
 dream_list = ["", "宇宙飛行士","アイドル","スポーツ選手","人気YouTuber","人気アナウンサー","プロゲーマー","ドクターX",
               "ノーベル賞","パティシエ","大統領","総理大臣","エベレスト登頂","ロックスター","アーティスト"]
-cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4","Figure5","Gcode6"]
+cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4", "Figure5","ThreeV6","Gcode7"]
 runner_flag = "無し"
 title3d_flag= "NO"
 
@@ -288,7 +289,7 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
             Next to the computer screen is a toy packaging box, designed in a style reminiscent of high-quality collectible figures, printed with original artwork. 
             The packaging features two-dimensional flat illustrations."""
 
-    elif cover_page == "6": #Gcode
+    elif cover_page == "6": #3views
         direction = "\n ## Please generate one page exactly following the prompt with your best effort. \n"
         common_prompt = direction + f""" Please generate Manga page.
             キャラクターを{page_styles[default_style]}のように作って下さい。
@@ -297,10 +298,10 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
             背景も{use_plot}に基づいたものにして下さい。
             {page_plot}になった将来の姿を描いて下さい。
             """
-        generated_prompt = f"""こ画像からフィギュアを作るために、以下の条件で画像を生成して下さい：
-              - 三面図のうちの前面・側面・背面を作成 
-            　- ランナー{runner_flag}
-            　- 足元に透明円形アクリル台座"""
+        generated_prompt = f"""この画像からフィギュアを作るために、以下の条件で画像を生成して下さい：
+             - 三面図として前面・側面・背面のセットを作成 
+             - ランナー{runner_flag}
+             - 足元に透明円形アクリル台座"""
         if title3d_flag == "YES":
             generated_prompt +=  f"頭の上に円弧状に浮かぶ立体文字「{page_plot}」と表示（アニメタイトル風）"
     else:
