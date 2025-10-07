@@ -14,7 +14,7 @@ ANIME.Ktrips.net -
 $ git clone https://github.com/ktrips/animaker.git
 $ cd animaker
 $ gcloud services enable run.googleapis.com
-$ mkdir results chara imgup
+$ mkdir results chara image
 $ vi .env
 ```
 ### Pepare AI API keys in .env file
