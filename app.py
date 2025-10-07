@@ -71,7 +71,7 @@ runner_flag = "無し"
 title3d_flag= "NO"
 
 DEF_LLM      = "OPENAI_API" #"GOOGLE_API" #
-default_key  = "" #os.getenv(DEF_LLM+"_KEY") #
+default_key  = os.getenv(DEF_LLM+"_KEY") #
 default_style= "Jp 90s"
 default_story= "Generate"
 default_size = "1024x1536" #"1536x1024" #"1024x1024"
