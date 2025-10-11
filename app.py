@@ -65,7 +65,7 @@ genai_config = {"temperature":0.9,
 
 dream_list = ["", "宇宙飛行士","アイドル","スポーツ選手","人気YouTuber","人気アナウンサー","プロゲーマー","ドクターX",
               "ノーベル賞","パティシエ","大統領","総理大臣","エベレスト登頂","ロックスター","アーティスト"]
-cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4", "Figure5","ThreeV6","Gcode7"]
+cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4", "Figure 5","ThreeV 6","GCode 7"]
 runner_flag = "無し"
 title3d_flag= "NO"
 
@@ -163,17 +163,17 @@ async def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
     charafile = genai_image(LLM,llm_key, anime_prompt,source_image)
     return charafile
 
-def plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1, dream_choice=""):
+def plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1): #, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Generation ==\n Starting {cover_pages} creation by {LLM} for {chara_name}!\n")
 
     charas_prompt= ""
     #if title_plot in ["title","cover"]:
-    if dream_choice != "":
-        system_content = f"このシステムは、テキストが提供された時に、「My Dream: {dream_choice}」をタイトルとして、主人公を{chara_name}とした物語のあらすじを300字程度で、起承転結を付けて生成します。"
-        use_plot = genai_text(LLM,llm_key, system_content, dream_choice)
-    elif len(page_plot) < 100:
-        system_content = f"このシステムは、テキストが提供された時に、「My Dream: {page_plot}」をタイトルとして、主人公を{chara_name}とした物語のあらすじを300字程度で、起承転結を付けて生成します。"
+    #if dream_choice != "":
+        #system_content = f"このシステムは、テキストが提供された時に、「My Dream: {dream_choice}」をタイトルとして、主人公を{chara_name}とした物語のあらすじを300字程度で、起承転結を付けて生成します。"
+        #use_plot = genai_text(LLM,llm_key, system_content, dream_choice)
+    if len(page_plot) < 100:
+        system_content = f"このシステムは、テキストが提供された時に、「{page_plot}」をタイトルとして、主人公を{chara_name}とした物語のあらすじを300字程度で、起承転結を付けて生成します。"
         use_plot = genai_text(LLM,llm_key, system_content, page_plot)
     else:
         use_plot = page_plot
@@ -256,7 +256,7 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
             ## Plot Start ##
             {use_plot}
             ## Plot End ##
-            主人公はプロットに基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、{page_plot}の特徴を正確に反映して、描写して下さい。
+            主人公はプロットに基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、プロットの内容の特徴を正確に反映して、描写して下さい。
             漫画のカバーページの背景はプロットに基づいた4コマ漫画にして下さい。そのストーリーはプロットの起承転結をつけて、背景として描いて下さい。
             {page_plot}になった将来の姿を描いて下さい。
 
@@ -277,8 +277,8 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
             ## Plot Start ##
             {use_plot}
             ## Plot End ##
-            主人公はプロットに基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、{page_plot}の特徴を正確に反映して、描写して下さい。
-            {page_plot}になった将来の姿を描いて下さい。
+            主人公はプロットに基づいた衣装、髪型、装飾にして下さい。特にその服装、格好は、プロットの内容の特徴を正確に反映して、描写して下さい。
+            プロットのストーリーになった将来の姿を描いて下さい。
             """
         if cover_page == "5": #Figure
             generated_prompt = f"""Create a 1/7 scale commercialized figurine of whole standing body of the characters in the picture, 
@@ -306,11 +306,11 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
     
     return use_plot, anime_prompt
 
-async def plot_image_generate(LLM,llm_key, img_up,page_plot, cover_pages, dream_choice=""):
+async def plot_image_generate(LLM,llm_key, img_up,page_plot, cover_pages): #, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM}!\n")
     chara_name = "New" #default_chara
-    use_plot, prompt_out = plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages, dream_choice)
+    use_plot, prompt_out = plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages), # dream_choice)
 
     resize_width = 512
     resize_proportion = resize_width / img_up.width
@@ -539,7 +539,7 @@ with gr.Blocks() as animaker:
                 new_up = gr.Image(label="1. Upload Photo", sources="upload",
                     type="pil", mirror_webcam=False, width=250,height=250,) # value=charas[default_chara][1]0)
                 #new_name  = gr.Textbox(label="New member name", value="New", interactive=True, scale=1)
-                dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
+                #dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
                 page_title  = gr.Textbox(label="2. Title", placeholder="Just put title (e.g. Singapore trip...) for anime", interactive=True, scale=2)
                 cover_pages = gr.Dropdown(choices=cover_page_list, label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
                 #cover_style= gr.Dropdown(choices=page_styles,label="4. Cover Image Style", value=default_style, interactive=True)
@@ -556,7 +556,7 @@ with gr.Blocks() as animaker:
                     sys_msg   = gr.Markdown(label="System message") 
                     use_plot  = gr.Markdown(label="Generated plot")
                     prompt_out= gr.Markdown(label="Generated prompt")
-                new_btn.click(fn=plot_image_generate, inputs=[LLM,llm_key, new_up,page_title, cover_pages, dream_choice], 
+                new_btn.click(fn=plot_image_generate, inputs=[LLM,llm_key, new_up,page_title, cover_pages], #, dream_choice], 
                     outputs=[use_plot,output_image,output_prompt], api_name="plot_image_generate")
                 #new_btn.click(plot_generate, [LLM,llm_key,new_up,cover_style,page_title,cover_pages], [use_plot,prompt_out], queue=False).then(
                     #raise_exception, sys_msg, None).success(
@@ -588,13 +588,13 @@ with gr.Blocks() as animaker:
                 #source_image = open(img_up_path, "rb")
                 chara_name= gr.Dropdown(choices=charas, label="1. Chara", value=default_chara, interactive=True, scale=1) #Textbox(label="Chara Name", interactive=True)
                 chara_name.change(chara_picture, chara_name, img_up)
-                dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
+                #dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
                 page_plot   = gr.Textbox(label="2. Plot", placeholder="Put your story plot here", interactive=True, scale=2)
                 cover_pages = gr.Dropdown(choices=cover_page_list, label="3. Generate Cover (0) or Pages (1 - 4) for Anime", interactive=True)
                 plot_btn    = gr.Button("3. Generate Prompt")
                 prompt_out  = gr.Textbox(label="3. Prompt Out", max_lines=500, 
                 placeholder ="Upload photo & plot, then edit results", interactive=True, scale=2)
-                plot_btn.click(fn=plot_generate, inputs=[LLM,llm_key, img_up,chara_name,page_plot,cover_pages, dream_choice], 
+                plot_btn.click(fn=plot_generate, inputs=[LLM,llm_key, img_up,chara_name,page_plot,cover_pages], # dream_choice], 
                                outputs=[page_plot, prompt_out], api_name="plot_generate")
 
                 anime_btn    = gr.Button("4. AniMaker!")
