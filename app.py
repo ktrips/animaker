@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 animaker_usr = os.getenv("ANIMAKER_USR")
 animaker_pswd= os.getenv("ANIMAKER_PSWD")
-DEF_LLM      = "OPENAI_API" #"GOOGLE_API"
+DEF_LLM      = "GOOGLE_API" #"OPENAI_API"
 default_key  = os.getenv(DEF_LLM+"_KEY") #
 
 from openai import OpenAI
@@ -88,15 +88,15 @@ gradio_path='./gradio_api/file='
 gr.set_static_paths(paths=[Path.cwd().absolute()/"results"])
 story_name = "100日でアイアンマンになる物語"
 
-default_chara= "ケン" #"シンジ"
+default_chara= "シンジ" #"ケン" #"シンジ"
 charas = {
-    #"シンジ": ["Shinji", chara_path+"shinji_anime.jpg","赤いトライアスロンウェアに身を包んだ、30代中肉中背の男性。髪は短く、黒色の髪。ニヤリと笑っている","黒"],
-    #"ノリコ": ["Noriko", chara_path+"noriko_anime.jpg","ブルーのランニングウェアに身を包んだ、ギャルっぽい女の子。髪はショートで青色の髪。スポーティーで笑顔が可愛い","青"],
-    #"ゴトウ": ["Goto",   chara_path+"goto_anime.jpg","黒いウェアにサングラスをかけている。40代の男性で鬼軍曹のような厳しい雰囲気。髪はベリーショートで、真っ黒","黒"],
-    #"ハラダ": ["Harada", chara_path+"harada_anime.jpg","オレンジのトライアスロンウェアを着た、40代の若手経営者。髪はお洒落なパーマで金髪。キラキラして自信ありげな笑みを浮かべる","金"],
-    #"マツイ": ["Matsui", chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。髪の毛はミディアムで緑色","紫"],
-    "ケン":   ["Ken",   chara_path+"ken_anime.jpg","黒のTシャツに蛍光グリーンのマウンテンジャケットを着たバックパッカー。髪はサラサラで赤色","赤"], # トライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
-    "ナオト": ["Naoto",  chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
+    "シンジ": ["Shinji", chara_path+"shinji_anime.jpg","赤いトライアスロンウェアに身を包んだ、30代中肉中背の男性。髪は短く、黒色の髪。ニヤリと笑っている","黒"],
+    "ノリコ": ["Noriko", chara_path+"noriko_anime.jpg","ブルーのランニングウェアに身を包んだ、ギャルっぽい女の子。髪はショートで青色の髪。スポーティーで笑顔が可愛い","青"],
+    "ゴトウ": ["Goto",   chara_path+"goto_anime.jpg","黒いウェアにサングラスをかけている。40代の男性で鬼軍曹のような厳しい雰囲気。髪はベリーショートで、真っ黒","黒"],
+    "ハラダ": ["Harada", chara_path+"harada_anime.jpg","オレンジのトライアスロンウェアを着た、40代の若手経営者。髪はお洒落なパーマで金髪。キラキラして自信ありげな笑みを浮かべる","金"],
+    "マツイ": ["Matsui", chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。髪の毛はミディアムで緑色","紫"],
+    #"ケン":   ["Ken",   chara_path+"ken_anime.jpg","黒のTシャツに蛍光グリーンのマウンテンジャケットを着たバックパッカー。髪はサラサラで赤色","赤"], # トライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
+    #"ナオト": ["Naoto",  chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
     #"ユラ": ["Yura",  chara_path+"yura_anime.jpg","ユラは芯が強く賢い女子高生だが、優しくいつも笑顔でみんなを和ませている。","ピンク"],
     #"New":   ["new",   chara_path+"others_anime.jpg","それぞれメンバーの仲間たち","黒"],
 #    "ケニー":  ["Kenny", chara_path+"kenny_anime.jpg","ケニーは世界中を旅している20代の大学生。引き締まった体をしている","赤"],
