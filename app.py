@@ -17,7 +17,7 @@ load_dotenv()
 animaker_usr = os.getenv("ANIMAKER_USR")
 animaker_pswd= os.getenv("ANIMAKER_PSWD")
 DEF_LLM      = "GOOGLE_API" #"OPENAI_API"
-default_key  = os.getenv(DEF_LLM+"_KEY") #
+default_key  = "" #os.getenv(DEF_LLM+"_KEY") #
 
 from openai import OpenAI
 import google.generativeai as gemini
@@ -181,7 +181,7 @@ def plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages=1): #, d
             charas_prompt += f"""- 登場人物「{chara}」: {chara}の顔、表情、年齢、性別は、この画像 `<file:{charas[chara][1]}>` を正確に反映して下さい。
             この人物の特徴は、{charas[chara][2]}で、{charas[chara][3]}色の髪型をしています。
             """
-    #print(use_plot)
+    print(use_plot)
 
     common_prompt = f"""# Prerequisites:
 Artist Requirements: {page_styles[default_style]}
@@ -463,7 +463,7 @@ def genai_image(LLM,llm_key, in_prompt,source_image):
         #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
         #en_prompt= genai_text(LLM,apikey, trans_content, in_prompt)
         #print(en_prompt)
-        response = client.models.generate_content(model="gemini-2.0-flash-preview-image-generation",
+        response = client.models.generate_content(model="gemini-3-flash-preview", #"gemini-2.0-flash-preview-image-generation",
             contents=[in_prompt, image_base64],
             config=types.GenerateContentConfig(response_modalities=['Text', 'Image'],
                 temperature=0.9 #genai_config["temperature"],
