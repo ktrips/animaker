@@ -17,12 +17,13 @@ load_dotenv()
 animaker_usr = os.getenv("ANIMAKER_USR")
 animaker_pswd= os.getenv("ANIMAKER_PSWD")
 DEF_LLM      = "GOOGLE_API" #"OPENAI_API"
-default_key  = "" #os.getenv(DEF_LLM+"_KEY") #
+default_key  = os.getenv(DEF_LLM+"_KEY") #
 
 from openai import OpenAI
 import google.generativeai as gemini
 from google import genai
-from google.genai import types
+#from google.genai import types
+from google.genai.types import GenerateContentConfig, Modality
 #from google.cloud import vision
 #from google.oauth2 import service_account
 
@@ -304,13 +305,13 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
     anime_prompt = common_prompt + generated_prompt
     print(anime_prompt)
     
-    return use_plot, anime_prompt
+    return use_plot, anime_prompt 
 
 async def plot_image_generate(LLM,llm_key, img_up,page_plot, cover_pages): #, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM}!\n")
     chara_name = "New" #default_chara
-    use_plot, prompt_out = plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages), # dream_choice)
+    use_plot,prompt_out = plot_generate(LLM,llm_key, img_up,chara_name,page_plot, cover_pages) # dream_choice)
 
     resize_width = 512
     resize_proportion = resize_width / img_up.width
@@ -339,7 +340,8 @@ async def plot_image_generate(LLM,llm_key, img_up,page_plot, cover_pages): #, dr
     prompt_link = f'<a href="{gradio_path}{promptfile}">Prompt</a>'
     output_link = sns_link + ' | ' + prompt_link
     """
-    return use_plot, imagefile, promptfile #, output_link
+
+    return use_plot, imagefile, promptfile #, output_link,  
 
 def camera_nodetect(image):
     image.save(img_up_path)
@@ -437,6 +439,7 @@ def genai_text(LLM,llm_key, system_content, in_prompt):
             max_tokens = genai_config["max_output_tokens"]
         )
         result = response.choices[0].message.content
+
     #print("Generated Plot: "+result)
     return result
     
@@ -463,9 +466,33 @@ def genai_image(LLM,llm_key, in_prompt,source_image):
         #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
         #en_prompt= genai_text(LLM,apikey, trans_content, in_prompt)
         #print(en_prompt)
-        response = client.models.generate_content(model="gemini-3-flash-preview", #"gemini-2.0-flash-preview-image-generation",
+
+        response = client.models.generate_content(
+            model="gemini-3-pro-image-preview",
+            contents=(in_prompt),
+            config=GenerateContentConfig(
+                response_modalities=[Modality.TEXT, Modality.IMAGE],
+            ),
+        )
+        for part in response.candidates[0].content.parts:
+            if part.text:
+                with open(promptfile, "a", encoding="utf-8") as f:
+                    f.write(part.text + "\n\n")
+                print(part.text)
+            elif part.inline_data:
+                with open(promptfile, 'a', encoding='utf-8') as f:
+                    f.write(in_prompt)
+
+                image = Image.open(BytesIO((part.inline_data.data)))
+                image.save(imagefile)
+                image.save("image.jpg")                
+            print("ImageFile saved: " + imagefile)
+
+        """
+        response = client.models.generate_content(model="gemini-3-pro-image-preview", #"gemini-2.0-flash-preview-image-generation",
             contents=[in_prompt, image_base64],
-            config=types.GenerateContentConfig(response_modalities=['Text', 'Image'],
+            config=types.GenerateContentConfig(
+                response_modalities=['Text', 'Image'],
                 temperature=0.9 #genai_config["temperature"],
             )
         )
@@ -482,8 +509,8 @@ def genai_image(LLM,llm_key, in_prompt,source_image):
                 image = Image.open(BytesIO(part.inline_data.data))
                 image.save(imagefile)
                 image.save("image.jpg")
-            print("ImageFile saved: " + imagefile)
-        
+        """
+
     elif LLM == "OPENAI_API":
         gpt_client = OpenAI(api_key=llm_key)
         generate_model = "gpt-image-1"
