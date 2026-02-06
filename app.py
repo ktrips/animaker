@@ -23,7 +23,7 @@ from openai import OpenAI
 import google.generativeai as gemini
 from google import genai
 #from google.genai import types
-from google.genai.types import GenerateContentConfig, Modality
+from google.genai.types import GenerateContentConfig, Modality #, ImageConfig
 #from google.cloud import vision
 #from google.oauth2 import service_account
 
@@ -45,7 +45,9 @@ page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような�
 }
 
 page_sizes= {"512×768": "512 × 768 (portrait orientation)",
+             "768x512": "768 x 512 (landscape orientation)",
             "1024x1536": "1024 × 1536 (portrait orientation)",
+            "1536x1024": "1536 x 1024 (landscape orientation)",
             "4コマ": "4コマ",
             "ポスター": "ポスター"}
 page_storys= {"Manual": "主人公を中心として、入力されたページ構成を変更せず、忠実に従って下さい。",
@@ -66,14 +68,16 @@ genai_config = {"temperature":0.9,
 
 dream_list = ["", "宇宙飛行士","アイドル","スポーツ選手","人気YouTuber","人気アナウンサー","プロゲーマー","ドクターX",
               "ノーベル賞","パティシエ","大統領","総理大臣","エベレスト登頂","ロックスター","アーティスト"]
-cover_page_list = ["Cover 0", "Page 1","Page 2","Page 3","Page 4", "Figure 5","ThreeV 6","GCode 7"]
+cover_page_list = ["Cover 0", "Page 1","Figure 5","ThreeV 6","GCode 7"] #"Page 2","Page 3","Page 4"
 runner_flag = "無し"
 title3d_flag= "NO"
 
 default_style= "Jp 90s"
 default_story= "Generate"
-default_size = "1024x1536" #"1536x1024" #"1024x1024"
-default_quality= "high"
+default_size = "768x512" #"1536x1024" #"1024x1536" #"1024x1024"
+default_quality= "low"
+default_ratio = "16:9" #"9:16" #
+default_image_size = "1K" 
 default_page   = 4
 default_panel  = 5
 default_color  = "指定なし"
@@ -197,8 +201,10 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
     {charas_prompt}
 - Overall setting:
     - Canvas size: {default_size}
-    - Art style: {page_styles[default_style]} (used consistently in every panel)
     - quality: {default_quality}
+    - Aspect Ratio: aspect_ratio={default_ratio}
+    - Image Size: image_size={default_image_size}
+    - Art style: {page_styles[default_style]} (used consistently in every panel)
     - Image quality: crisp and clear (used consistently in every panel)
     - Font: Noto Sans JP (used consistently in every panel)
     - Panel Margins: Each panel should have a uniform margin of 10px on all four sides internally (between the artwork and the panel border).
@@ -297,7 +303,7 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
                 generated_prompt +=  f"頭の上に円弧状に浮かぶ立体文字「{page_plot}」と表示（アニメタイトル風）"
     else:
         system_content  = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
-        direction = f"""\n ## Please generate one page image exactly following [# Page {cover_page}] instruction, 
+        direction = f"""\n ## Please generate {default_page} pages image exactly following from [# Page {cover_page}] to [# Page {default_page}] instruction,
             and put [# ページタイトル] on top of the page with your best effort.
             If there is a picture attached please use it for image generation. \n"""
         generated_prompt = direction + genai_text(LLM,llm_key, system_content, plot_prompt)
@@ -463,15 +469,67 @@ def genai_image(LLM,llm_key, in_prompt,source_image):
     if LLM == "GOOGLE_API":
         #gemini.configure(api_key=llm_key)
         client   = genai.Client(api_key=llm_key)
+
         #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
         #en_prompt= genai_text(LLM,apikey, trans_content, in_prompt)
         #print(en_prompt)
-
+        """
         response = client.models.generate_content(
             model="gemini-3-pro-image-preview",
             contents=(in_prompt),
+            config=types.GenerateContentConfig(
+                response_modalities=[types.Modality.TEXT, types.Modality.IMAGE],
+            ),
+        
+
+        response = client.models.generate_content(model="gemini-3-pro-image-preview", #"gemini-2.0-flash-preview-image-generation",
+            contents=[in_prompt, image_base64],
+            config=types.GenerateContentConfig(
+                response_modalities=['Text', 'Image'],
+                #temperature=0.9 #genai_config["temperature"],
+            )
+        )
+        response = client.models.generate_content(
+        #response = client.chats.create(
+        #response = chat.send_message(in_prompt,
+            model="gemini-3-pro-image-preview",
+            contents=[in_prompt, image_base64],
+            #Image.open('person1.png'),
+            config=types.GenerateContentConfig(
+                response_modalities=['Text','Image'] #[types.Modality.TEXT, types.Modality.IMAGE],
+            )
+        )
+        
+        tools=[{"google_search": {}}],
+        image_config=types.ImageConfig(
+            aspect_ratio="9:16",
+            image_size="1K"
+        ),
+        
+        for part in response.candidates[0].content.parts:
+            if part.text:
+                with open(promptfile, "a", encoding="utf-8") as f:
+                    f.write(part.text + "\n\n")
+                print(part.text)
+            elif part.inline_data:
+                with open(promptfile, 'a', encoding='utf-8') as f:
+                    f.write(in_prompt)
+                image = Image.open(BytesIO((part.inline_data.data)))
+                image.save(imagefile)
+                image.save("image.jpg")                
+            print("ImageFile saved: " + imagefile)
+
+        """
+        response = client.models.generate_content(
+            model="gemini-3-pro-image-preview",
+            contents=(in_prompt), #image_base64],
             config=GenerateContentConfig(
                 response_modalities=[Modality.TEXT, Modality.IMAGE],
+                #temperature=1.0 #genai_config["temperature"],
+                #tools=[{"google_search": {}}],
+                #image_config=ImageConfig(
+                    #aspect_ratio="16:9",
+                    #image_size="2K")
             ),
         )
         for part in response.candidates[0].content.parts:
@@ -487,29 +545,6 @@ def genai_image(LLM,llm_key, in_prompt,source_image):
                 image.save(imagefile)
                 image.save("image.jpg")                
             print("ImageFile saved: " + imagefile)
-
-        """
-        response = client.models.generate_content(model="gemini-3-pro-image-preview", #"gemini-2.0-flash-preview-image-generation",
-            contents=[in_prompt, image_base64],
-            config=types.GenerateContentConfig(
-                response_modalities=['Text', 'Image'],
-                temperature=0.9 #genai_config["temperature"],
-            )
-        )
-        #imgnum = 0
-        for part in response.candidates[0].content.parts:
-            if part.text is not None:
-                with open(promptfile, "a", encoding="utf-8") as f:
-                    f.write(part.text + "\n\n")
-                print(part.text)
-            elif part.inline_data is not None:
-                #imgnum += 1
-                with open(promptfile, 'a', encoding='utf-8') as f:
-                    f.write(in_prompt)
-                image = Image.open(BytesIO(part.inline_data.data))
-                image.save(imagefile)
-                image.save("image.jpg")
-        """
 
     elif LLM == "OPENAI_API":
         gpt_client = OpenAI(api_key=llm_key)
@@ -564,7 +599,7 @@ with gr.Blocks() as animaker:
         with gr.Column():
             with gr.Tab("簡単アニメ作成"):
                 new_up = gr.Image(label="1. Upload Photo", sources="upload",
-                    type="pil", mirror_webcam=False, width=250,height=250,) # value=charas[default_chara][1]0)
+                    type="pil", mirror_webcam=False, width=250,height=250, value=charas[default_chara][1] )
                 #new_name  = gr.Textbox(label="New member name", value="New", interactive=True, scale=1)
                 #dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
                 page_title  = gr.Textbox(label="2. Title", placeholder="Just put title (e.g. Singapore trip...) for anime", interactive=True, scale=2)
@@ -662,7 +697,6 @@ with gr.Blocks() as animaker:
                 image_quality= gr.Dropdown(choices=image_qualities,label="Image quality", value=default_quality, interactive=True)
                 generate_page= gr.Textbox(label="Generate page/s",value=default_page, interactive=True)
                 page_panel  = gr.Textbox(label="# of panels in a page",value=default_panel, interactive=True)
-
                 num_steps= gr.Slider(minimum=1,maximum=20,value=default_steps,step=1, label="Steps",interactive=True)
             with gr.Accordion(label="Charactors:", open=False):
                 for chara in charas:
