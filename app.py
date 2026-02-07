@@ -105,7 +105,7 @@ charas = {
     "ナオト":["Naoto", chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
     "ユラ":  ["Yura",  chara_path+"yura_anime.jpg","ユラは芯が強く賢い女子高生だが、優しくいつも笑顔でみんなを和ませている。","ピンク"],
     "旅仲間":["Travelers",chara_path+"ken_naoto.jpg","ケンとナオトの旅仲間","黒"],
-    #"New":   ["new",   chara_path+"others_anime.jpg","それぞれメンバーの仲間たち","黒"],
+    "New":  ["new",   chara_path+"new_anime.jpg","それぞれメンバーの仲間たち","黒"],
 #    "ケニー":  ["Kenny", chara_path+"kenny_anime.jpg","ケニーは世界中を旅している20代の大学生。引き締まった体をしている","赤"],
 }
 panel_sizes = {"Small": "Small size",
@@ -126,17 +126,17 @@ def ret_data(nums):
     image_list = []
     if os.path.isdir(results_path):
         files= os.listdir(results_path)
-        #sorted_file_names = sorted(file_names)
         for file in sorted(files):
             #file_open = open(results_path+file, 'r')
             #file_load = json.load(file_open)
             #hist_date = parse(json_load['timestamp']).strftime('%Y/%m/%d %H:%M:%S')
             if file[-4:] == ".jpg":
                 image_list.append(results_path+file)
-                #f"<a href='{results_path}{file}'><img href='{results_path}{file}' width=100></a> "
+                #prompt_file = file.replace(file[-4:], ".txt")
+                #print(prompt_file)
+                #image_list[file] = prompt_file
     else:
         image_list = "No image files"
-    print(image_list)
     return image_list
 
 async def save_data(chara_name: str, image_data: str):
@@ -692,7 +692,7 @@ with gr.Blocks() as animaker:
         """
     with gr.Row():
         with gr.Accordion(label="Anime Gallery:", open=False):
-            gr.Gallery(ret_data(5), columns=6, show_label=True, show_download_button=True, show_share_button=True, allow_preview=True)
+            gr.Gallery(ret_data(5), columns=5, show_label=True, show_download_button=True, show_share_button=True, allow_preview=True)
 
 parser = argparse.ArgumentParser(description="Gradio UI for Anime Maker")
 parser.add_argument("--ip", type=str, default="127.0.0.1", help="IP address to bind to")
