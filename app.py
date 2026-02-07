@@ -17,7 +17,7 @@ load_dotenv()
 animaker_usr = os.getenv("ANIMAKER_USR")
 animaker_pswd= os.getenv("ANIMAKER_PSWD")
 DEF_LLM      = "GOOGLE_API" #"OPENAI_API"
-default_key  = os.getenv(DEF_LLM+"_KEY") #
+default_key  = "" #os.getenv(DEF_LLM+"_KEY") #
 
 from openai import OpenAI
 import google.generativeai as gemini
@@ -27,7 +27,7 @@ from google.genai.types import GenerateContentConfig, Modality #, ImageConfig
 #from google.cloud import vision
 #from google.oauth2 import service_account
 
-page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪のアニメスタイル",
+page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような色使いと質感で、太い輪郭線、大きな瞳、光沢のある髪で、クリアなタッチのアニメスタイル",
         "Arukikata": "地球の歩き方風の表紙",
         "Ukiyoe": "浮世絵の葛飾北斎風に変換。太い輪郭線と落ち着いた和風色彩で描き、背景には浮世絵スタイルの山や波を加える。",
         "Retro": "レトロゲーム風に変換。8bitドット絵スタイルで、カラフルかつレトロな雰囲気にする。",
@@ -74,7 +74,6 @@ llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
 genai_config = {"temperature":0.9, 
             "top_p":0.95, "top_k":40, #0.95, 
             "max_output_tokens": 8192,}  #4098 #2048, #256,
-
 dream_list = ["", "宇宙飛行士","アイドル","スポーツ選手","人気YouTuber","人気アナウンサー","プロゲーマー","ドクターX",
             "ノーベル賞","パティシエ","大統領","総理大臣","エベレスト登頂","ロックスター","アーティスト"]
 cover_page_list = ["Cover 0","Page 1","Figure 5","ThreeV 6","GCode 7"] #"Page 2","Page 3","Page 4"
@@ -90,23 +89,22 @@ default_cat  = "Book"
 results_path= './results/'
 img_up_path = './image/img_up.jpg'
 chara_path  = "./chara/"
-members_path= chara_path+"Shinji_Noriko_Harada_Matsui_Goto.jpg"
-#chara_path+"shinji_anime.jpg" "noriko_anime.jpg" "goto_anime.jpg" "harada_anime.jpg" "matsui_anime.jpg"
 gradio_path='./gradio_api/file='
 gr.set_static_paths(paths=[Path.cwd().absolute()/"results"])
 story_name = "100日でアイアンマンになる物語"
 
 default_chara= "トライアスロンメンバー" #"ケン" #"シンジ"
 charas = {
-    "トライアスロンメンバー": ["Members", members_path,"シンジ、ノリコ、ゴトウ、ハラダ、マツイのトライアスロンのメンバー","黒"],
-    "シンジ": ["Shinji", chara_path+"shinji_anime.jpg","赤いトライアスロンウェアに身を包んだ、30代中肉中背の男性。髪は短く、黒色の髪。ニヤリと笑っている","黒"],
-    "ノリコ": ["Noriko", chara_path+"noriko_anime.jpg","ブルーのランニングウェアに身を包んだ、ギャルっぽい女の子。髪はショートで青色の髪。スポーティーで笑顔が可愛い","青"],
-    "ゴトウ": ["Goto",   chara_path+"goto_anime.jpg","黒いウェアにサングラスをかけている。40代の男性で鬼軍曹のような厳しい雰囲気。髪はベリーショートで、真っ黒","黒"],
-    "ハラダ": ["Harada", chara_path+"harada_anime.jpg","オレンジのトライアスロンウェアを着た、40代の若手経営者。髪はお洒落なパーマで金髪。キラキラして自信ありげな笑みを浮かべる","金"],
-    "マツイ": ["Matsui", chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。髪の毛はミディアムで緑色","紫"],
-    #"ケン":   ["Ken",   chara_path+"ken_anime.jpg","黒のTシャツに蛍光グリーンのマウンテンジャケットを着たバックパッカー。髪はサラサラで赤色","赤"], # トライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
-    #"ナオト": ["Naoto",  chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
-    #"ユラ": ["Yura",  chara_path+"yura_anime.jpg","ユラは芯が強く賢い女子高生だが、優しくいつも笑顔でみんなを和ませている。","ピンク"],
+    "トライアスロンメンバー":["Members", chara_path+"Shinji_Noriko_Harada_Matsui_Goto.jpg", "シンジ、ノリコ、ゴトウ、ハラダ、マツイのトライアスロンのメンバー","黒"],
+    "シンジ":["Shinji",chara_path+"shinji_anime.jpg","赤いトライアスロンウェアに身を包んだ、30代中肉中背の男性。髪は短く、黒色の髪。ニヤリと笑っている","黒"],
+    "ノリコ":["Noriko",chara_path+"noriko_anime.jpg","ブルーのランニングウェアに身を包んだ、ギャルっぽい女の子。髪はショートで青色の髪。スポーティーで笑顔が可愛い","青"],
+    "ゴトウ":["Goto",  chara_path+"goto_anime.jpg","黒いウェアにサングラスをかけている。40代の男性で鬼軍曹のような厳しい雰囲気。髪はベリーショートで、真っ黒","黒"],
+    "ハラダ":["Harada",chara_path+"harada_anime.jpg","オレンジのトライアスロンウェアを着た、40代の若手経営者。髪はお洒落なパーマで金髪。キラキラして自信ありげな笑みを浮かべる","金"],
+    "マツイ":["Matsui",chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。髪の毛はミディアムで緑色","紫"],
+    "ケン":  ["Ken",   chara_path+"ken_anime.jpg","黒のTシャツに蛍光グリーンのマウンテンジャケットを着たバックパッカー。髪はサラサラで赤色","赤"], # トライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
+    "ナオト":["Naoto", chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
+    "ユラ":  ["Yura",  chara_path+"yura_anime.jpg","ユラは芯が強く賢い女子高生だが、優しくいつも笑顔でみんなを和ませている。","ピンク"],
+    "旅仲間":["Travelers",chara_path+"ken_naoto.jpg","ケンとナオトの旅仲間","黒"],
     #"New":   ["new",   chara_path+"others_anime.jpg","それぞれメンバーの仲間たち","黒"],
 #    "ケニー":  ["Kenny", chara_path+"kenny_anime.jpg","ケニーは世界中を旅している20代の大学生。引き締まった体をしている","赤"],
 }
@@ -157,9 +155,7 @@ async def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
 
     chara_up.save(chara_path)
     source_image = open(chara_path+chara_name+".jpg", "rb")
-
     image_base64 = encode_image(chara_up) # open(img_up, "rb")
-
     anime_prompt= f"""ここに写っている人物を、日本の90年代アニメ風の画像に変換して下さい。
         セル画のような色使いと質感で、太い輪郭線、光沢のある髪のアニメスタイルです。画像のみを出力して下さい。
         顔や表情は写真に正確に忠実に表現して下さい。
@@ -241,14 +237,14 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 # Page n : [# ページタイトル]
 ## Panels layout:
 ### Panel m
-  — Panel composition: このPanelにピッタリなショットを、フルショット、ワイドショット、ミディアムショット、クローズアップショットから選んで下さい。
-  — 演出指示:. このPanelにピッタリ合った演出表示を正確に記述して下さい。
-  — テキスト要素:
-    - ナレーション: このPanelにぴったり合うナレーションを生成して下さい。
-    - 効果音・書き文字: このPanelのシーンに最適な効果音・書き文字を生成して下さい。
-  — キャラクター表情と動き:
-    - 主人公: このPanelのシーンに最適な主人公の表情を類推し表示して下さい。
-    - その他の登場人物: もし他の登場人物がいたら、表示して下さい。
+    — Panel composition: このPanelにピッタリなショットを、フルショット、ワイドショット、ミディアムショット、クローズアップショットから選んで下さい。
+    — 演出指示:. このPanelにピッタリ合った演出表示を正確に記述して下さい。
+    — テキスト要素:
+        - ナレーション: このPanelにぴったり合うナレーションを生成して下さい。
+        - 効果音・書き文字: このPanelのシーンに最適な効果音・書き文字を生成して下さい。
+    — キャラクター表情と動き:
+        - 主人公: このPanelのシーンに最適な主人公の表情を類推し表示して下さい。
+        - その他の登場人物: もし他の登場人物がいたら、表示して下さい。
     """
 
     generated_prompt = ""
@@ -325,14 +321,6 @@ async def plot_image_generate(LLM,llm_key, img_up,page_plot, page_background, pa
     resize_proportion = resize_width / img_up.width
     img_resized = img_up.resize((int(img_up.width * resize_proportion), int(img_up.height * resize_proportion)))
     img_resized.save(img_up_path)
-    #(width, height) = (img_up.width // 5, img_up.height // 5)
-    #img_resized = img_up.resize((width, height), Image.LANCZOS)
-    #img_resized.save(img_up_path)
-    #image_base64 = encode_image(img_up)
-
-    #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
-    #en_prompt = genai_text(LLM,llm_key, trans_content, prompt_out)
-    #print(en_prompt)
 
     print(f"== Image Generation ==\n Starting Anime image generation by {LLM}!\n")
 
@@ -471,10 +459,6 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
     if LLM == "GOOGLE_API":
         #gemini.configure(api_key=llm_key)
         client   = genai.Client(api_key=llm_key)
-
-        #trans_content = f"""You are a professional English translator who is proficient in all kinds of languages, especially good at translating professional academic articles into easy-to-understand translation."""
-        #en_prompt= genai_text(LLM,apikey, trans_content, in_prompt)
-        #print(en_prompt)
         """
         response = client.models.generate_content(
             model="gemini-3-pro-image-preview",
@@ -520,7 +504,6 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
                 image.save(imagefile)
                 image.save("image.jpg")                
             print("ImageFile saved: " + imagefile)
-
         """
         response = client.models.generate_content(
             model="gemini-3-pro-image-preview",
@@ -542,7 +525,6 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
             elif part.inline_data:
                 with open(promptfile, 'a', encoding='utf-8') as f:
                     f.write(in_prompt)
-
                 image = Image.open(BytesIO((part.inline_data.data)))
                 image.save(imagefile)
                 image.save("image.jpg")                
