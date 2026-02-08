@@ -44,7 +44,7 @@ page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような�
         "Chikawa": "ちいかわ風に変換してください。丸くて小さな体型、シンプルな線画、ほのぼのした背景で描いてください。",
 }
 
-page_sizes = {"1024x1024": "1:1",
+page_sizes = {"1024x1024": "5:4", #"1:1",
     "1024x1536": "9:16", #"4:5",
     "512x768": "9:16",
     "1536x1024": "16:9",
@@ -179,6 +179,7 @@ async def add_chara(LLM,llm_key, chara_up,chara_name,chara_desc,chara_color):
 def plot_generate(LLM,llm_key, img_up,chara_name,page_plot, page_background, page_size,image_quality, generate_page, cover_pages=1): #, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Generation ==\n Starting {cover_pages} creation by {LLM} for {chara_name}!\n")
+    print("plot_gen > "+llm_key)
 
     charas_prompt= ""
     #if title_plot in ["title","cover"]:
@@ -324,6 +325,7 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 async def plot_image_generate(LLM,llm_key, img_up,page_plot, page_background, page_size,image_quality, generate_page, cover_pages): #, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM}!\n")
+    print("plot_image_gen > "+llm_key)
     print(img_up)
     chara_name = default_chara
     #if img_up in charas[chara][1]:
@@ -422,6 +424,7 @@ def llm_image_change(LLM):
 def genai_text(LLM,llm_key, system_content, in_prompt):
     #llm_key = os.getenv(LLM+"_KEY") if llm_key == "" else llm_key
     #llm_model= llms[LLM]
+    print("genai_text > "+llm_key)
 
     if LLM == "GOOGLE_API":
         gemini.configure(api_key=llm_key)
@@ -459,6 +462,7 @@ def genai_text(LLM,llm_key, system_content, in_prompt):
 def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
     #llm_key = os.getenv(LLM+"_KEY") if llm_key == "" else llm_key
     print(f"== Image Generation by {llms_image[LLM]} ==\n")
+    print("genai_image > "+llm_key)
 
     chara_images = []
     for chara in charas:
@@ -654,8 +658,6 @@ with gr.Blocks() as animaker:
                         #&hashtags={page_title},100Days2Ironman,ironman&openExternalBrowser=1">Post SNS</a>
                         # | <a href="{gradio_path}{output_prompt}">Prompt</a>""")
                 #use_plot = gr.Markdown(label="Generated plot and image for AniMaker")
-                #anime_btn.click(fn=image_generate, inputs=[LLM,llm_key, prompt_out], #, cover_pages], 
-                    #outputs=[use_plot,output_image,output_prompt], api_name="image_generate")
                 anime_btn.click(fn=genai_image, inputs=[LLM,llm_key, prompt_out, page_size,image_quality], #, cover_pages], 
                     outputs=[output_image,promptfile], api_name="genai_image")
 
