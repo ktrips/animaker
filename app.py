@@ -22,8 +22,8 @@ default_key  = "" #os.getenv(DEF_LLM+"_KEY") #
 from openai import OpenAI
 import google.generativeai as gemini
 from google import genai
-#from google.genai import types
-from google.genai.types import GenerateContentConfig, Modality #, ImageConfig
+from google.genai import types
+#from google.genai.types import GenerateContentConfig, Modality #, ImageConfig
 #from google.cloud import vision
 #from google.oauth2 import service_account
 
@@ -45,7 +45,7 @@ page_styles= {"Jp 90s": "日本の90年代アニメ風。セル画のような�
 }
 
 page_sizes = {"1024x1024": "1:1",
-    "1024x1536": "9:16",
+    "1024x1536": "9:16", #"4:5",
     "512x768": "9:16",
     "1536x1024": "16:9",
     "768x512": "16:9",
@@ -71,6 +71,10 @@ from vertexai.generative_models import GenerationConfig, GenerativeModel, Part
 llms = {"OPENAI_API": "gpt-4o-mini", #"gpt-image-1",
         "GOOGLE_API": "gemini-2.0-flash", #"gemini-2.0-flash-preview-image-generation",
         "ANTHOLOPIC_API": "claude-3-5-sonnet-latest"}
+llms_image = {"OPENAI_API": "gpt-image-1",
+        "GOOGLE_API": "gemini-3-pro-image-preview", #"gemini-2.0-flash-preview-image-generation",
+        "ANTHOLOPIC_API": "claude-3-5-sonnet-latest"}
+
 genai_config = {"temperature":0.9, 
             "top_p":0.95, "top_k":40, #0.95, 
             "max_output_tokens": 8192,}  #4098 #2048, #256,
@@ -93,19 +97,25 @@ gradio_path='./gradio_api/file='
 gr.set_static_paths(paths=[Path.cwd().absolute()/"results"])
 story_name = "100日でアイアンマンになる物語"
 
-default_chara= "トライアスロンメンバー" #"ケン" #"シンジ"
+stories = {
+    "Ironman": "iron_charas",
+    "Mideast": "trip_charas",
+}
+iron_charas = {"シンジ":["Shinji"],"ノリコ":["Noriko"]}
+iron_charas = {"ケン":["Ken"],"ナオト":["Naoto"]}
+default_chara= "シンジ" #"トライアスロンメンバー" #"ケン" #"シンジ"
 charas = {
-    "トライアスロンメンバー":["Members", chara_path+"Shinji_Noriko_Harada_Matsui_Goto.jpg", "シンジ、ノリコ、ゴトウ、ハラダ、マツイのトライアスロンのメンバー","黒"],
+    #"トライアスロンメンバー":["Members", chara_path+"Shinji_Noriko_Harada_Matsui_Goto.jpg", "シンジ、ノリコ、ゴトウ、ハラダ、マツイのトライアスロンのメンバー","黒"],
     "シンジ":["Shinji",chara_path+"shinji_anime.jpg","赤いトライアスロンウェアに身を包んだ、30代中肉中背の男性。髪は短く、黒色の髪。ニヤリと笑っている","黒"],
     "ノリコ":["Noriko",chara_path+"noriko_anime.jpg","ブルーのランニングウェアに身を包んだ、ギャルっぽい女の子。髪はショートで青色の髪。スポーティーで笑顔が可愛い","青"],
     "ゴトウ":["Goto",  chara_path+"goto_anime.jpg","黒いウェアにサングラスをかけている。40代の男性で鬼軍曹のような厳しい雰囲気。髪はベリーショートで、真っ黒","黒"],
     "ハラダ":["Harada",chara_path+"harada_anime.jpg","オレンジのトライアスロンウェアを着た、40代の若手経営者。髪はお洒落なパーマで金髪。キラキラして自信ありげな笑みを浮かべる","金"],
     "マツイ":["Matsui",chara_path+"matsui_anime.jpg","白いランニングウェアを着たマッチョな30代男性。寡黙だが子煩悩なパパでもある。髪の毛はミディアムで緑色","紫"],
-    "ケン":  ["Ken",   chara_path+"ken_anime.jpg","黒のTシャツに蛍光グリーンのマウンテンジャケットを着たバックパッカー。髪はサラサラで赤色","赤"], # トライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
-    "ナオト":["Naoto", chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
-    "ユラ":  ["Yura",  chara_path+"yura_anime.jpg","ユラは芯が強く賢い女子高生だが、優しくいつも笑顔でみんなを和ませている。","ピンク"],
-    "旅仲間":["Travelers",chara_path+"ken_naoto.jpg","ケンとナオトの旅仲間","黒"],
-    "New":  ["new",   chara_path+"new_anime.jpg","それぞれメンバーの仲間たち","黒"],
+    #"ケン":  ["Ken",   chara_path+"ken_anime.jpg","黒のTシャツに蛍光グリーンのマウンテンジャケットを着たバックパッカー。髪はサラサラで赤色","赤"], # トライアスロンウェアを着た痩せぎすな30代男性。自信なさげだが内なる闘志を秘めている。髪はサラサラで赤色","赤"],
+    #"ナオト":["Naoto", chara_path+"naoto_anime.jpg","ナオトは世界中を旅している20代の大学生。背は低いが、足が速く、引き締まった体をしている","青"],
+    #"ユラ":  ["Yura",  chara_path+"yura_anime.jpg","ユラは芯が強く賢い女子高生だが、優しくいつも笑顔でみんなを和ませている。","ピンク"],
+    #"旅仲間":["Travelers",chara_path+"ken_naoto.jpg","ケンとナオトの旅仲間","黒"],
+    #"New":  ["new",   chara_path+"new_anime.jpg","それぞれメンバーの仲間たち","黒"],
 #    "ケニー":  ["Kenny", chara_path+"kenny_anime.jpg","ケニーは世界中を旅している20代の大学生。引き締まった体をしている","赤"],
 }
 panel_sizes = {"Small": "Small size",
@@ -218,7 +228,7 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
     """
 
 #プロット全体を通した[# テキストネームタイトル] をつけて下さい。
-    plot_prompt = f"""「{chara_name}」はこの話の主人公で、この画像{img_up}のような人物です。他の登場人物としては、{charas.keys()}がいます。
+    plot_prompt = f"""「{chara_name}」はこの話の主人公で、この画像のような人物です。他の登場人物としては、{charas.keys()}がいます。
 各登場人物の特徴は以下のようなものです。各登場人物の服装と表情は、そのシーンに合ったものにして下さい。
 {charas_prompt}
 各登場人物は、そのシーンに合った服装、表情をしています。
@@ -314,7 +324,13 @@ Based on [#text-only storyboard] please output a full color cartoon. Please give
 async def plot_image_generate(LLM,llm_key, img_up,page_plot, page_background, page_size,image_quality, generate_page, cover_pages): #, dream_choice=""):
     cover_page = str(cover_pages)[-1]
     print(f"== Prompt Image Generation ==\n {cover_pages} image by {LLM}!\n")
-    chara_name = "New" #default_chara
+    print(img_up)
+    chara_name = default_chara
+    #if img_up in charas[chara][1]:
+        #chara_name = default_chara
+    #else:
+        #chara_name = "主人公"
+
     use_plot,prompt_out = plot_generate(LLM,llm_key, img_up,chara_name,page_plot, page_background, page_size,image_quality, generate_page, cover_pages) # dream_choice)
 
     resize_width = 512
@@ -325,8 +341,8 @@ async def plot_image_generate(LLM,llm_key, img_up,page_plot, page_background, pa
     print(f"== Image Generation ==\n Starting Anime image generation by {LLM}!\n")
 
     source_image = open(img_up_path, "rb")
-
     imagefile,promptfile = genai_image(LLM,llm_key, prompt_out,source_image, page_size,image_quality)
+
     """
     sns_link= f"<a href="https://x.com/intent/post?text={story_name}%20
         https%3A%2F%2Fktrips.net%2F100-days-to-ironman%2F
@@ -400,14 +416,16 @@ def style_change(page_style):
     return page_styles[page_style]
 def llm_change(LLM):
     return llms[LLM]
+def llm_image_change(LLM):
+    return llms_image[LLM]
 
 def genai_text(LLM,llm_key, system_content, in_prompt):
     #llm_key = os.getenv(LLM+"_KEY") if llm_key == "" else llm_key
-    llm_model= llms[LLM]
+    #llm_model= llms[LLM]
 
     if LLM == "GOOGLE_API":
         gemini.configure(api_key=llm_key)
-        gemini_client = gemini.GenerativeModel(llm_model)
+        gemini_client = gemini.GenerativeModel(llms[LLM])
             #GenerationConfig(temperature=genai_config["temperature"], max_output_tokens=genai_config["max_output_tokens"]))
             #generation_config=gemini_config)
         response= gemini_client.generate_content(in_prompt) #[image_base64, plot_prompt])
@@ -417,7 +435,7 @@ def genai_text(LLM,llm_key, system_content, in_prompt):
         gpt_client = OpenAI(api_key=llm_key)
         #system_content = "このシステムは、画像が提供された時にそれを判別し、テキストと共に、それに合ったプロンプトを生成します。"
         response = gpt_client.chat.completions.create(
-            model=llm_model,
+            model=llms[LLM],
             messages = [
                 {'role': 'system',
                     'content': system_content},
@@ -435,14 +453,24 @@ def genai_text(LLM,llm_key, system_content, in_prompt):
             max_tokens = genai_config["max_output_tokens"]
         )
         result = response.choices[0].message.content
-
     #print("Generated Plot: "+result)
     return result
     
 def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
     #llm_key = os.getenv(LLM+"_KEY") if llm_key == "" else llm_key
-    print(f"== Image Generation by {LLM} ==\n")
+    print(f"== Image Generation by {llms_image[LLM]} ==\n")
 
+    chara_images = []
+    for chara in charas:
+        chara_images.append(charas[chara][1])
+        #chara_images += charas[chara][1] #charas[chara][0]
+    print(chara_images)
+    chara_images_open = []
+    for chara_image in chara_images:
+        chara_images_open.append(Image.open(chara_image))
+    #Image.open(chara_images[0]) 
+
+    """
     source_image = open(img_up_path, "rb")
     #image_base64 = encode_image(source_image) # open(img_up, "rb")
     #img = Image.open(filename)
@@ -450,6 +478,7 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
         data = f.read()
     img = Image.open(BytesIO(data))
     image_base64 = encode_image(img)
+    """
 
     filename  = "anime_"+f'{datetime.now().strftime("%Y%m%d_%H%M%S")}'
     imagefile = f"{results_path}{filename}_image.jpg" #{imgnum:03d}.jpg"
@@ -459,15 +488,20 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
     if LLM == "GOOGLE_API":
         #gemini.configure(api_key=llm_key)
         client   = genai.Client(api_key=llm_key)
-        """
         response = client.models.generate_content(
-            model="gemini-3-pro-image-preview",
-            contents=(in_prompt),
+            model=llms_image[LLM], #"gemini-3-pro-image-preview"
+            contents=(in_prompt, chara_images_open), #image_base64],
             config=types.GenerateContentConfig(
-                response_modalities=[types.Modality.TEXT, types.Modality.IMAGE],
+                response_modalities=['TEXT','IMAGE'],
+                #response_modalities=[Modality.TEXT, Modality.IMAGE],
+                #temperature=1.0 #genai_config["temperature"],
+                #tools=[{"google_search": {}}],
+                #image_config=types.ImageConfig(
+                    #aspect_ratio=page_sizes[page_size], #"16:9"
+                    #image_size=image_qualities[image_quality]), #"2K"
             ),
-        
-
+        )
+        """
         response = client.models.generate_content(model="gemini-3-pro-image-preview", #"gemini-2.0-flash-preview-image-generation",
             contents=[in_prompt, image_base64],
             config=types.GenerateContentConfig(
@@ -475,8 +509,7 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
                 #temperature=0.9 #genai_config["temperature"],
             )
         )
-        response = client.models.generate_content(
-        #response = client.chats.create(
+        response = client.chats.create(
         #response = chat.send_message(in_prompt,
             model="gemini-3-pro-image-preview",
             contents=[in_prompt, image_base64],
@@ -485,13 +518,11 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
                 response_modalities=['Text','Image'] #[types.Modality.TEXT, types.Modality.IMAGE],
             )
         )
-        
         tools=[{"google_search": {}}],
         image_config=types.ImageConfig(
             aspect_ratio="9:16",
             image_size="1K"
         ),
-        
         for part in response.candidates[0].content.parts:
             if part.text:
                 with open(promptfile, "a", encoding="utf-8") as f:
@@ -505,18 +536,7 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
                 image.save("image.jpg")                
             print("ImageFile saved: " + imagefile)
         """
-        response = client.models.generate_content(
-            model="gemini-3-pro-image-preview",
-            contents=(in_prompt), #image_base64],
-            config=GenerateContentConfig(
-                response_modalities=[Modality.TEXT, Modality.IMAGE],
-                #temperature=1.0 #genai_config["temperature"],
-                #tools=[{"google_search": {}}],
-                #image_config=ImageConfig(
-                    #aspect_ratio=page_sizes[page_size], #"16:9"
-                    #image_size=image_qualities[image_quality]) #"2K"
-            ),
-        )
+
         for part in response.candidates[0].content.parts:
             if part.text:
                 with open(promptfile, "a", encoding="utf-8") as f:
@@ -532,7 +552,7 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
 
     elif LLM == "OPENAI_API":
         gpt_client = OpenAI(api_key=llm_key)
-        generate_model = "gpt-image-1"
+        generate_model = llms_image[LLM] #"gpt-image-1"
         response = gpt_client.images.edit(
             model  = generate_model,
             image  = source_image,
@@ -550,9 +570,7 @@ def genai_image(LLM,llm_key, in_prompt,source_image, page_size,image_quality):
             f.write(base64.b64decode(image_response))
         print("ImageFile saved: "+imagefile)
         #./gradio_api/file=./results/anime_
-
     return imagefile, promptfile
-
 
 with gr.Blocks() as animaker:
     with gr.Row():
@@ -560,6 +578,8 @@ with gr.Blocks() as animaker:
             LLM = gr.Dropdown(choices=llms,label="0. LLM", interactive=True, value=DEF_LLM)
             llm_model = gr.Textbox(label="0. LLM Model", value=llms[DEF_LLM], interactive=True)
             LLM.change(llm_change, LLM, llm_model)
+            llm_image_model = gr.Textbox(label="0. LLM Image Model", value=llms_image[DEF_LLM], interactive=True)
+            LLM.change(llm_image_change, LLM, llm_image_model)
             llm_key = gr.Textbox(label="0. LLM API Key", interactive=True, value=default_key, placeholder="Paste your LLM API key here", type="password")
             page_size = gr.Dropdown(choices=page_sizes,label="Canvas size", interactive=True)
             image_quality= gr.Dropdown(choices=image_qualities,label="Image quality", interactive=True)
@@ -586,7 +606,7 @@ with gr.Blocks() as animaker:
         with gr.Column():
             with gr.Tab("簡単アニメ作成"):
                 new_up = gr.Image(label="1. Upload Photo", sources="upload",
-                    type="pil", mirror_webcam=False, width=250,height=250, value=charas[default_chara][1] )
+                    type="pil", mirror_webcam=False, width=250,height=250, value=charas[default_chara][1])
                 #new_name  = gr.Textbox(label="New member name", value="New", interactive=True, scale=1)
                 #dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
                 page_background = gr.Textbox(label="2. Background", value="ストーリーの背景、パート", placeholder="Enter the story background if any", interactive=True, scale=2)
@@ -611,9 +631,9 @@ with gr.Blocks() as animaker:
             with gr.Tab("あらすじから作成"):
                 #with gr.Row():
                 img_up = gr.Image(label="1. Chara Photo", sources="upload",
-                    type="pil", mirror_webcam=False, value=charas[default_chara][1], width=250,height=250)         
+                    type="pil", mirror_webcam=False, width=250,height=250, value=charas[default_chara][1])     
                 #source_image = open(img_up_path, "rb")
-                chara_name= gr.Dropdown(choices=charas, label="1. Chara", value=default_chara, interactive=True, scale=1) #Textbox(label="Chara Name", interactive=True)
+                chara_name= gr.Dropdown(choices=charas, label="1. Chara", interactive=True, scale=1) #value=default_chara, #Textbox(label="Chara Name", interactive=True)
                 chara_name.change(chara_picture, chara_name, img_up)
                 #dream_choice= gr.Dropdown(choices=dream_list, label="My Dream: ", interactive=True)
                 page_background = gr.Textbox(label="2. Background", value="ストーリーの背景", placeholder="Enter the story background if any", interactive=True, scale=2)
